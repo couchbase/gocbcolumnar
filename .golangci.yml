@@ -1,0 +1,8 @@
+linters:
+  enable:
+    - exhaustruct
+    - gocritic
+    - gofmt
+    - nilnil
+    - nlreturn
+    - wsl
