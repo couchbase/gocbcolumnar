@@ -1,3 +1,3 @@
 # Couchbase Go Columnar Client
 
-Coming soon.
+Not supported, in development.
