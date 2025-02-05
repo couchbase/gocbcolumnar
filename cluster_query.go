@@ -24,6 +24,7 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		ServerTimeout:        nil,
+		Unmarshaler:          nil,
 	}
 
 	for _, opt := range opts {
@@ -53,6 +54,10 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 
 		if len(opt.Raw) > 0 {
 			queryOpts.Raw = opt.Raw
+		}
+
+		if opt.Unmarshaler != nil {
+			queryOpts.Unmarshaler = opt.Unmarshaler
 		}
 	}
 

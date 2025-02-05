@@ -111,22 +111,31 @@ func (opts *TimeoutOptions) SetServerQueryTimeout(timeout time.Duration) *Timeou
 	return opts
 }
 
-type ConnectOptions struct {
+type ClusterOptions struct {
 	// TimeoutOptions specifies various operation timeouts.
 	TimeoutOptions TimeoutOptions
 
 	// SecurityOptions specifies security related configuration options.
 	SecurityOptions SecurityOptions
+
+	// Unmarshaler specifies the default unmarshaler to use for decoding query response rows.
+	Unmarshaler Unmarshaler
 }
 
-func (co *ConnectOptions) SetTimeoutOptions(timeoutOptions TimeoutOptions) *ConnectOptions {
+func (co *ClusterOptions) SetTimeoutOptions(timeoutOptions TimeoutOptions) *ClusterOptions {
 	co.TimeoutOptions = timeoutOptions
 
 	return co
 }
 
-func (co *ConnectOptions) SetSecurityOptions(securityOptions SecurityOptions) *ConnectOptions {
+func (co *ClusterOptions) SetSecurityOptions(securityOptions SecurityOptions) *ClusterOptions {
 	co.SecurityOptions = securityOptions
+
+	return co
+}
+
+func (co *ClusterOptions) SetUnmarshaler(unmarshaler Unmarshaler) *ClusterOptions {
+	co.Unmarshaler = unmarshaler
 
 	return co
 }
