@@ -14,7 +14,7 @@ type Cluster struct {
 	timeoutsConfig TimeoutOptions
 }
 
-func Connect(connStr string, credential Credential, opts ConnectOptions) (*Cluster, error) {
+func Connect(connStr string, credential Credential, opts ClusterOptions) (*Cluster, error) {
 	connSpec, err := gocbconnstr.Parse(connStr)
 	if err != nil {
 		return nil, err

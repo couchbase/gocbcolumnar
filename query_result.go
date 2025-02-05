@@ -32,6 +32,8 @@ type QueryMetadata struct {
 // QueryResult allows access to the results of a query.
 type QueryResult struct {
 	reader analyticsRowReader
+
+	unmarshaler Unmarshaler
 }
 
 func (r *QueryResult) NextRow() *QueryResultRow {
@@ -41,7 +43,8 @@ func (r *QueryResult) NextRow() *QueryResultRow {
 	}
 
 	return &QueryResultRow{
-		rowBytes: rowBytes,
+		rowBytes:    rowBytes,
+		unmarshaler: r.unmarshaler,
 	}
 }
 
@@ -99,10 +102,12 @@ func (r *QueryResult) MetaData() (*QueryMetadata, error) {
 
 type QueryResultRow struct {
 	rowBytes []byte
+
+	unmarshaler Unmarshaler
 }
 
 func (qrr *QueryResultRow) Content(valuePtr any) error {
-	err := json.Unmarshal(qrr.rowBytes, &valuePtr)
+	err := qrr.unmarshaler.Unmarshal(qrr.rowBytes, &valuePtr)
 	if err != nil {
 		return err
 	}
@@ -185,7 +190,8 @@ func iterateResults(ctx context.Context, result *QueryResult, handler RowHandler
 		case row, ok := <-rowCh:
 			if len(row) > 0 {
 				err := handler(&QueryResultRow{
-					rowBytes: row,
+					rowBytes:    row,
+					unmarshaler: result.unmarshaler,
 				})
 				if err != nil {
 					result.reader.Close()

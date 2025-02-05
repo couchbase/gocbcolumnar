@@ -27,6 +27,9 @@ type QueryOptions struct {
 	Raw map[string]interface{}
 
 	ServerTimeout *time.Duration
+
+	// Unmarshaler specifies the default unmarshaler to use for decoding rows from this query.
+	Unmarshaler Unmarshaler
 }
 
 func NewQueryOptions() *QueryOptions {
@@ -38,6 +41,7 @@ func NewQueryOptions() *QueryOptions {
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		ServerTimeout:        nil,
+		Unmarshaler:          nil,
 	}
 }
 
