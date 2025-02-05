@@ -34,19 +34,7 @@ type QueryResult struct {
 	reader analyticsRowReader
 }
 
-type QueryResultRows struct {
-	reader   analyticsRowReader
-	rowBytes []byte
-}
-
-func (r *QueryResult) Rows() QueryResultRows {
-	return QueryResultRows{
-		reader:   r.reader,
-		rowBytes: nil,
-	}
-}
-
-func (r *QueryResultRows) NextRow() *QueryResultRow {
+func (r *QueryResult) NextRow() *QueryResultRow {
 	rowBytes := r.reader.NextRow()
 	if rowBytes == nil {
 		return nil
@@ -113,7 +101,7 @@ type QueryResultRow struct {
 	rowBytes []byte
 }
 
-func (qrr *QueryResultRow) ContentAs(valuePtr any) error {
+func (qrr *QueryResultRow) Content(valuePtr any) error {
 	err := json.Unmarshal(qrr.rowBytes, &valuePtr)
 	if err != nil {
 		return err
@@ -129,15 +117,11 @@ func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, e
 
 	var buffered []QueryResultRow
 
-	rows := result.Rows()
-
-	for {
-		row := rows.NextRow()
-		if row == nil {
-			break
-		}
-
+	row := result.NextRow()
+	for row != nil {
 		buffered = append(buffered, *row)
+
+		row = result.NextRow()
 	}
 
 	meta, err := result.MetaData()
