@@ -55,7 +55,7 @@ type SecurityOptions struct {
 	// CipherSuites specifies the TLS cipher suites the SDK is allowed to use when negotiating TLS
 	// settings, or an empty list to use any cipher suite supported by the runtime environment.
 	// See: https://go.dev/src/crypto/tls/cipher_suites.go
-	CipherSuites []uint16
+	CipherSuites []string
 }
 
 func (opts *SecurityOptions) SetTrustOnly(trustOnly TrustOnly) *SecurityOptions {
@@ -70,7 +70,7 @@ func (opts *SecurityOptions) SetDisableServerCertificateVerification(disabled bo
 	return opts
 }
 
-func (opts *SecurityOptions) SetCipherSuites(cipherSuites []uint16) *SecurityOptions {
+func (opts *SecurityOptions) SetCipherSuites(cipherSuites []string) *SecurityOptions {
 	opts.CipherSuites = cipherSuites
 
 	return opts

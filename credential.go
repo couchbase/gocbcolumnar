@@ -12,8 +12,8 @@ type Credential struct {
 }
 
 // NewCredential creates a new Credential with the specified username and password.
-func NewCredential(username, password string) *Credential {
-	return &Credential{
+func NewCredential(username, password string) Credential {
+	return Credential{
 		UsernamePassword: &UserPassPair{Username: username, Password: password},
 	}
 }
