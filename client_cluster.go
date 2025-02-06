@@ -2,6 +2,7 @@ package cbcolumnar
 
 import (
 	"crypto/tls"
+
 	"github.com/couchbaselabs/gocbconnstr"
 )
 

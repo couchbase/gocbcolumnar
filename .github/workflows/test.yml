@@ -1,0 +1,26 @@
+name: Run Tests
+
+on:
+  push:
+    tags:
+      - v*
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test:
+    name: Test
+
+    runs-on: ubuntu-20.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.21'
+      - name: Initialize deps
+        run: go get
+      - name: Run tests
+        timeout-minutes: 40
+        run: |
+          go test ./... -v -race
