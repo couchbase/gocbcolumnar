@@ -9,6 +9,12 @@ type Unmarshaler interface {
 type JSONUnmarshaler struct{}
 
 func (ju JSONUnmarshaler) Unmarshal(data []byte, v interface{}) error {
-	// TODO: Don't return the json package error
-	return json.Unmarshal(data, v)
+	err := json.Unmarshal(data, v)
+	if err != nil {
+		return unmarshalError{
+			Reason: err.Error(),
+		}
+	}
+
+	return nil
 }

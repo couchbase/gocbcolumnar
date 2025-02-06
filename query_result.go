@@ -1,9 +1,7 @@
 package cbcolumnar
 
 import (
-	"context"
 	"encoding/json"
-	"errors"
 	"time"
 )
 
@@ -48,37 +46,6 @@ func (r *QueryResult) NextRow() *QueryResultRow {
 	}
 }
 
-// // Next assigns the next result from the results into the value pointer, returning whether the read was successful.
-// func (r *QueryResultRows) Next() bool {
-// 	if r.reader == nil {
-// 		return false
-// 	}
-//
-// 	rowBytes := r.reader.NextRow()
-// 	if rowBytes == nil {
-// 		return false
-// 	}
-//
-// 	r.rowBytes = rowBytes
-//
-// 	return true
-// }
-//
-// // Row returns the value of the current row.
-// func (r *QueryResultRows) Row(valuePtr interface{}) error {
-// 	if r.rowBytes == nil {
-// 		return maybeEnhanceQueryError(ErrNoResult)
-// 	}
-//
-// 	if bytesPtr, ok := valuePtr.(*json.RawMessage); ok {
-// 		*bytesPtr = r.rowBytes
-//
-// 		return nil
-// 	}
-//
-// 	return json.Unmarshal(r.rowBytes, valuePtr)
-// }
-
 // Err returns any errors that have occurred on the stream.
 func (r *QueryResult) Err() error {
 	if r.reader == nil {
@@ -87,7 +54,7 @@ func (r *QueryResult) Err() error {
 
 	err := r.reader.Err()
 	if err != nil {
-		return maybeEnhanceQueryError(err)
+		return err
 	}
 
 	return nil
@@ -97,7 +64,12 @@ func (r *QueryResult) Err() error {
 // the meta-data will only be available once the object has been closed (either
 // implicitly or explicitly).
 func (r *QueryResult) MetaData() (*QueryMetadata, error) {
-	return r.reader.MetaData()
+	meta, err := r.reader.MetaData()
+	if err != nil {
+		return nil, err
+	}
+
+	return meta, nil
 }
 
 type QueryResultRow struct {
@@ -107,17 +79,17 @@ type QueryResultRow struct {
 }
 
 func (qrr *QueryResultRow) Content(valuePtr any) error {
-	err := qrr.unmarshaler.Unmarshal(qrr.rowBytes, &valuePtr)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	// We don't need to convert this error, if it's ours then we already have.
+	// If it's the users then we don't want to interfere with it.
+	return qrr.unmarshaler.Unmarshal(qrr.rowBytes, &valuePtr) // nolint:wrapcheck
 }
 
 func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, error) {
 	if result == nil {
-		return nil, nil, makeError(errors.New("result cannot be nil"), nil)
+		return nil, nil, invalidArgumentError{
+			ArgumentName: "result",
+			Reason:       "result cannot be nil",
+		}
 	}
 
 	var buffered []QueryResultRow
@@ -144,12 +116,18 @@ func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, e
 
 type RowHandler func(row *QueryResultRow) error
 
-func IterateQueryResult(ctx context.Context, result *QueryResult, handler RowHandler) (*QueryMetadata, error) {
+// IterateQueryResult results will iterate over all rows in the result set and call the handler for each row.
+// This provides a push based approach to streaming the results.
+// Note that the result stream is already bound to context.Context so this function does not take a context.
+func IterateQueryResult(result *QueryResult, handler RowHandler) (*QueryMetadata, error) {
 	if result == nil {
-		return nil, makeError(errors.New("result cannot be nil"), nil)
+		return nil, invalidArgumentError{
+			ArgumentName: "result",
+			Reason:       "result cannot be nil",
+		}
 	}
 
-	if err := iterateResults(ctx, result, handler); err != nil {
+	if err := iterateResults(result, handler); err != nil {
 		return nil, err
 	}
 
@@ -165,7 +143,7 @@ func IterateQueryResult(ctx context.Context, result *QueryResult, handler RowHan
 	return meta, nil
 }
 
-func iterateResults(ctx context.Context, result *QueryResult, handler RowHandler) error {
+func iterateResults(result *QueryResult, handler RowHandler) error {
 	rowCh := make(chan json.RawMessage, 1)
 
 	go func() {
@@ -181,30 +159,21 @@ func iterateResults(ctx context.Context, result *QueryResult, handler RowHandler
 		close(rowCh)
 	}()
 
-	for {
-		select {
-		case <-ctx.Done():
-			result.reader.Close()
+	for row := range rowCh {
+		if len(row) > 0 {
+			err := handler(&QueryResultRow{
+				rowBytes:    row,
+				unmarshaler: result.unmarshaler,
+			})
+			if err != nil {
+				result.reader.Close()
 
-			return ctx.Err()
-		case row, ok := <-rowCh:
-			if len(row) > 0 {
-				err := handler(&QueryResultRow{
-					rowBytes:    row,
-					unmarshaler: result.unmarshaler,
-				})
-				if err != nil {
-					result.reader.Close()
-
-					return err
-				}
-			}
-
-			if !ok {
-				return nil
+				return err
 			}
 		}
 	}
+
+	return nil
 }
 
 type analyticsRowReader interface {
