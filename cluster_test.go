@@ -8,7 +8,7 @@ import (
 )
 
 func TestInvalidCipherSuites(t *testing.T) {
-	_, err := cbcolumnar.Connect("couchbases://localhost", cbcolumnar.NewCredential("username", "password"), cbcolumnar.ClusterOptions{
+	_, err := cbcolumnar.NewCluster("couchbases://localhost", cbcolumnar.NewCredential("username", "password"), cbcolumnar.ClusterOptions{
 		TimeoutOptions: cbcolumnar.TimeoutOptions{
 			ConnectTimeout:     nil,
 			DispatchTimeout:    nil,
