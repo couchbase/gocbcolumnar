@@ -1,6 +1,8 @@
 package cbcolumnar
 
 import (
+	"crypto/tls"
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -121,21 +123,34 @@ func Connect(connStr string, credential Credential, opts ConnectOptions) (*Clust
 
 	if valStr, ok := fetchOption("security.cipher_suites"); ok {
 		split := strings.Split(valStr, ",")
-		suites := make([]uint16, len(split))
 
-		for i, strSuite := range split {
-			suite, err := strconv.ParseUint(strSuite, 0, 16)
-			if err != nil {
-				return nil, invalidArgumentError{
-					ArgumentName: "security.cipher_suites",
-					Reason:       err.Error(),
-				}
+		opts.SecurityOptions.CipherSuites = split
+	}
+
+	cipherSuites := make([]*tls.CipherSuite, len(opts.SecurityOptions.CipherSuites))
+
+	for i, suite := range opts.SecurityOptions.CipherSuites {
+		for _, supportedSuite := range tls.CipherSuites() {
+			if supportedSuite.Name == suite {
+				cipherSuites[i] = supportedSuite
+
+				continue
 			}
-
-			suites[i] = uint16(suite)
 		}
 
-		opts.SecurityOptions.CipherSuites = suites
+		for _, unsupportedSuite := range tls.InsecureCipherSuites() {
+			if unsupportedSuite.Name == suite {
+				// TODO: Log warning if this is the case
+				cipherSuites[i] = unsupportedSuite
+
+				continue
+			}
+		}
+
+		return nil, invalidArgumentError{
+			ArgumentName: "CipherSuites",
+			Reason:       fmt.Sprintf("unsupported cipher suite %s", suite),
+		}
 	}
 
 	if connectTimeout == 0 {
@@ -164,11 +179,13 @@ func Connect(connStr string, credential Credential, opts ConnectOptions) (*Clust
 	opts.TimeoutOptions.ServerQueryTimeout = &serverQueryTimeout
 
 	mgr, err := newClusterClient(clusterClientOptions{
-		Spec:            connSpec,
-		Credential:      &credential,
-		TimeoutsConfig:  &opts.TimeoutOptions,
-		SecurityConfig:  &opts.SecurityOptions,
-		ForceDisableSrv: !useSrv,
+		Spec:                                 connSpec,
+		Credential:                           &credential,
+		TimeoutsConfig:                       &opts.TimeoutOptions,
+		TrustOnly:                            opts.SecurityOptions.TrustOnly,
+		DisableServerCertificateVerification: opts.SecurityOptions.DisableServerCertificateVerification,
+		CipherSuites:                         nil,
+		ForceDisableSrv:                      !useSrv,
 	})
 	if err != nil {
 		return nil, err
