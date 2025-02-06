@@ -122,6 +122,22 @@ type ClusterOptions struct {
 	Unmarshaler Unmarshaler
 }
 
+func NewClusterOptions() *ClusterOptions {
+	return &ClusterOptions{
+		TimeoutOptions: TimeoutOptions{
+			ConnectTimeout:     nil,
+			DispatchTimeout:    nil,
+			ServerQueryTimeout: nil,
+		},
+		SecurityOptions: SecurityOptions{
+			TrustOnly:                            TrustOnlyCapella{},
+			DisableServerCertificateVerification: nil,
+			CipherSuites:                         nil,
+		},
+		Unmarshaler: nil,
+	}
+}
+
 func (co *ClusterOptions) SetTimeoutOptions(timeoutOptions TimeoutOptions) *ClusterOptions {
 	co.TimeoutOptions = timeoutOptions
 

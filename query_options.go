@@ -1,9 +1,5 @@
 package cbcolumnar
 
-import (
-	"time"
-)
-
 // QueryScanConsistency indicates the level of data consistency desired for an analytics query.
 type QueryScanConsistency uint
 
@@ -26,8 +22,6 @@ type QueryOptions struct {
 	// Raw provides a way to provide extra parameters in the request body for the query.
 	Raw map[string]interface{}
 
-	ServerTimeout *time.Duration
-
 	// Unmarshaler specifies the default unmarshaler to use for decoding rows from this query.
 	Unmarshaler Unmarshaler
 }
@@ -40,7 +34,6 @@ func NewQueryOptions() *QueryOptions {
 		ReadOnly:             nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
-		ServerTimeout:        nil,
 		Unmarshaler:          nil,
 	}
 }
@@ -77,12 +70,6 @@ func (opts *QueryOptions) SetScanConsistency(scanConsistency QueryScanConsistenc
 
 func (opts *QueryOptions) SetRaw(raw map[string]interface{}) *QueryOptions {
 	opts.Raw = raw
-
-	return opts
-}
-
-func (opts *QueryOptions) SetServerTimeout(timeout time.Duration) *QueryOptions {
-	opts.ServerTimeout = &timeout
 
 	return opts
 }

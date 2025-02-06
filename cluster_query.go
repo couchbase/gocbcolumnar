@@ -12,7 +12,7 @@ func (c *Cluster) ExecuteQuery(ctx context.Context, statement string, opts ...*Q
 
 	queryOpts := mergeQueryOptions(opts...)
 
-	return c.client.QueryClient().Query(ctx, statement, queryOpts) //nolint:wrapcheck
+	return c.client.QueryClient().Query(ctx, statement, queryOpts)
 }
 
 func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
@@ -23,7 +23,6 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 		ReadOnly:             nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
-		ServerTimeout:        nil,
 		Unmarshaler:          nil,
 	}
 
@@ -62,8 +61,4 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 	}
 
 	return queryOpts
-}
-
-func maybeEnhanceQueryError(err error) error {
-	return err
 }
