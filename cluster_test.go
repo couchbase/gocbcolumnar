@@ -1,13 +1,14 @@
 package cbcolumnar_test
 
 import (
+	"testing"
+
 	cbcolumnar "github.com/couchbase/gocbcolumnar"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestInvalidCipherSuites(t *testing.T) {
-	_, err := cbcolumnar.Connect("couchbases://localhost", cbcolumnar.NewCredential("username", "password"), cbcolumnar.ConnectOptions{
+	_, err := cbcolumnar.Connect("couchbases://localhost", cbcolumnar.NewCredential("username", "password"), cbcolumnar.ClusterOptions{
 		TimeoutOptions: cbcolumnar.TimeoutOptions{
 			ConnectTimeout:     nil,
 			DispatchTimeout:    nil,
@@ -18,6 +19,7 @@ func TestInvalidCipherSuites(t *testing.T) {
 			DisableServerCertificateVerification: nil,
 			CipherSuites:                         []string{"bad"},
 		},
+		Unmarshaler: nil,
 	})
 
 	assert.ErrorIs(t, err, cbcolumnar.ErrInvalidArgument)
