@@ -3,6 +3,7 @@ package cbcolumnar
 import (
 	"crypto/tls"
 	"fmt"
+	"net"
 	"strconv"
 	"strings"
 	"time"
@@ -178,14 +179,45 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 	opts.TimeoutOptions.DispatchTimeout = &dispatchTimeout
 	opts.TimeoutOptions.ServerQueryTimeout = &serverQueryTimeout
 
+	var addrs []address
+
+	srvRecord := connSpec.SrvRecordName()
+
+	if srvRecord == "" {
+		useSrv = false
+	}
+
+	if useSrv {
+		_, srvAddrs, err := net.LookupSRV("couchbases", "tcp", srvRecord)
+		if err != nil {
+			// We're fine returning the net error here.
+			return nil, err // nolint: wrapcheck
+		}
+
+		for _, srvAddrs := range srvAddrs {
+			addrs = append(addrs, address{
+				Host: strings.TrimSuffix(srvAddrs.Target, "."),
+				Port: int(srvAddrs.Port),
+			})
+		}
+	} else {
+		for _, addr := range connSpec.Addresses {
+			addrs = append(addrs, address{
+				Host: addr.Host,
+				Port: addr.Port,
+			})
+		}
+	}
+
 	mgr, err := newClusterClient(clusterClientOptions{
 		Spec:                                 connSpec,
 		Credential:                           &credential,
 		TimeoutsConfig:                       &opts.TimeoutOptions,
 		TrustOnly:                            opts.SecurityOptions.TrustOnly,
 		DisableServerCertificateVerification: opts.SecurityOptions.DisableServerCertificateVerification,
-		CipherSuites:                         nil,
-		ForceDisableSrv:                      !useSrv,
+		CipherSuites:                         cipherSuites,
+		DisableSrv:                           !useSrv,
+		Addresses:                            addrs,
 	})
 	if err != nil {
 		return nil, err
