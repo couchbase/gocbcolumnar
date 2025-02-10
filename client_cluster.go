@@ -13,14 +13,20 @@ type clusterClient interface {
 	Close() error
 }
 
+type address struct {
+	Host string
+	Port int
+}
+
 type clusterClientOptions struct {
 	Spec                                 gocbconnstr.ConnSpec
 	Credential                           *Credential
 	TimeoutsConfig                       *TimeoutOptions
 	TrustOnly                            TrustOnly
 	DisableServerCertificateVerification *bool
-	CipherSuites                         []tls.CipherSuite
-	ForceDisableSrv                      bool
+	CipherSuites                         []*tls.CipherSuite
+	DisableSrv                           bool
+	Addresses                            []address
 }
 
 func newClusterClient(opts clusterClientOptions) (clusterClient, error) {
