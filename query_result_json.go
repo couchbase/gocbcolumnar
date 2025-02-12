@@ -1,12 +1,8 @@
-// nolint
 package cbcolumnar
 
 import (
-	"encoding/json"
 	"time"
 )
-
-// Code in this file will be required soon.
 
 type jsonAnalyticsMetrics struct {
 	ElapsedTime      string `json:"elapsedTime"`
@@ -35,43 +31,35 @@ type jsonAnalyticsResponse struct {
 	Handle          string                 `json:"handle,omitempty"`
 }
 
-type jsonAnalyticsError struct {
-	Code uint32 `json:"code"`
-	Msg  string `json:"msg"`
-}
-
-type jsonAnalyticsErrorResponse struct {
-	Errors json.RawMessage `json:"errors"`
-}
-
-func (meta *QueryMetadata) fromData(data jsonAnalyticsResponse) error {
-	metrics := QueryMetrics{}
-	if err := metrics.fromData(data.Metrics); err != nil {
-		return err
+func (meta *QueryMetadata) fromData(data jsonAnalyticsResponse) {
+	metrics := QueryMetrics{
+		ElapsedTime:      0,
+		ExecutionTime:    0,
+		ResultCount:      0,
+		ResultSize:       0,
+		ProcessedObjects: 0,
 	}
+	metrics.fromData(data.Metrics)
 
 	warnings := make([]QueryWarning, len(data.Warnings))
 	for wIdx, jsonWarning := range data.Warnings {
-		err := warnings[wIdx].fromData(jsonWarning)
-		if err != nil {
-			return err
-		}
+		warnings[wIdx].fromData(jsonWarning)
 	}
 
 	meta.RequestID = data.RequestID
 	meta.Metrics = metrics
 	meta.Warnings = warnings
-
-	return nil
 }
 
-func (metrics *QueryMetrics) fromData(data jsonAnalyticsMetrics) error {
+func (metrics *QueryMetrics) fromData(data jsonAnalyticsMetrics) {
 	elapsedTime, err := time.ParseDuration(data.ElapsedTime)
+	// nolint: staticcheck
 	if err != nil {
 		// logDebugf("Failed to parse query metrics elapsed time: %s", err)
 	}
 
 	executionTime, err := time.ParseDuration(data.ExecutionTime)
+	// nolint: staticcheck
 	if err != nil {
 		// logDebugf("Failed to parse query metrics execution time: %s", err)
 	}
@@ -81,13 +69,9 @@ func (metrics *QueryMetrics) fromData(data jsonAnalyticsMetrics) error {
 	metrics.ResultCount = data.ResultCount
 	metrics.ResultSize = data.ResultSize
 	metrics.ProcessedObjects = data.ProcessedObjects
-
-	return nil
 }
 
-func (warning *QueryWarning) fromData(data jsonAnalyticsWarning) error {
+func (warning *QueryWarning) fromData(data jsonAnalyticsWarning) {
 	warning.Code = data.Code
 	warning.Message = data.Message
-
-	return nil
 }

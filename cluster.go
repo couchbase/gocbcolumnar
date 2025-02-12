@@ -131,27 +131,33 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 	cipherSuites := make([]*tls.CipherSuite, len(opts.SecurityOptions.CipherSuites))
 
 	for i, suite := range opts.SecurityOptions.CipherSuites {
+		var s *tls.CipherSuite
+
 		for _, supportedSuite := range tls.CipherSuites() {
 			if supportedSuite.Name == suite {
-				cipherSuites[i] = supportedSuite
+				s = supportedSuite
 
-				continue
+				break
 			}
 		}
 
 		for _, unsupportedSuite := range tls.InsecureCipherSuites() {
 			if unsupportedSuite.Name == suite {
 				// TODO: Log warning if this is the case
-				cipherSuites[i] = unsupportedSuite
+				s = unsupportedSuite
 
-				continue
+				break
 			}
 		}
 
-		return nil, invalidArgumentError{
-			ArgumentName: "CipherSuites",
-			Reason:       fmt.Sprintf("unsupported cipher suite %s", suite),
+		if s == nil {
+			return nil, invalidArgumentError{
+				ArgumentName: "CipherSuites",
+				Reason:       fmt.Sprintf("unsupported cipher suite %s", suite),
+			}
 		}
+
+		cipherSuites[i] = s
 	}
 
 	if connectTimeout == 0 {
@@ -175,10 +181,6 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 		}
 	}
 
-	opts.TimeoutOptions.ConnectTimeout = &connectTimeout
-	opts.TimeoutOptions.DispatchTimeout = &dispatchTimeout
-	opts.TimeoutOptions.ServerQueryTimeout = &serverQueryTimeout
-
 	var addrs []address
 
 	srvRecord := connSpec.SrvRecordName()
@@ -188,7 +190,7 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 	}
 
 	if useSrv {
-		_, srvAddrs, err := net.LookupSRV("couchbases", "tcp", srvRecord)
+		_, srvAddrs, err := net.LookupSRV("couchbases", "tcp", connSpec.Addresses[0].Host)
 		if err != nil {
 			// We're fine returning the net error here.
 			return nil, err // nolint: wrapcheck
@@ -212,7 +214,9 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 	mgr, err := newClusterClient(clusterClientOptions{
 		Spec:                                 connSpec,
 		Credential:                           &credential,
-		TimeoutsConfig:                       &opts.TimeoutOptions,
+		ConnectTimeout:                       connectTimeout,
+		DispatchTimeout:                      dispatchTimeout,
+		ServerQueryTimeout:                   serverQueryTimeout,
 		TrustOnly:                            opts.SecurityOptions.TrustOnly,
 		DisableServerCertificateVerification: opts.SecurityOptions.DisableServerCertificateVerification,
 		CipherSuites:                         cipherSuites,
