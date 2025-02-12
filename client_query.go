@@ -15,15 +15,23 @@ type queryClient interface {
 	Query(ctx context.Context, statement string, opts *QueryOptions) (*QueryResult, error)
 }
 
+type gocbcoreQueryClientNamespace struct {
+	Database string
+	Scope    string
+}
 type gocbcoreQueryClient struct {
 	agent                     *gocbcore.ColumnarAgent
 	defaultServerQueryTimeout time.Duration
+	defaultUnmarshaler        Unmarshaler
+	namespace                 *gocbcoreQueryClientNamespace
 }
 
-func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultServerQueryTimeout time.Duration) *gocbcoreQueryClient {
+func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultServerQueryTimeout time.Duration, defaultUnmarshaler Unmarshaler, namespace *gocbcoreQueryClientNamespace) *gocbcoreQueryClient {
 	return &gocbcoreQueryClient{
 		agent:                     agent,
 		defaultServerQueryTimeout: defaultServerQueryTimeout,
+		defaultUnmarshaler:        defaultUnmarshaler,
+		namespace:                 namespace,
 	}
 }
 
@@ -33,14 +41,23 @@ func (c *gocbcoreQueryClient) Query(ctx context.Context, statement string, opts 
 		return nil, err
 	}
 
+	if c.namespace != nil {
+		coreOpts.Payload["query_context"] = fmt.Sprintf("default:`%s`.`%s`", c.namespace.Database, c.namespace.Scope)
+	}
+
 	res, err := c.agent.Query(ctx, *coreOpts)
 	if err != nil {
 		return nil, translateGocbcoreError(err)
 	}
 
+	unmarshaler := opts.Unmarshaler
+	if unmarshaler == nil {
+		unmarshaler = c.defaultUnmarshaler
+	}
+
 	return &QueryResult{
 		reader:      c.newRowReader(res),
-		unmarshaler: opts.Unmarshaler,
+		unmarshaler: unmarshaler,
 	}, nil
 }
 

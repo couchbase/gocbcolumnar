@@ -17,4 +17,5 @@ linters-settings:
     ignoreInterfaceRegexps:
       - "analyticsRowReader"
       - "queryClient"
+      - "clusterClient"
 

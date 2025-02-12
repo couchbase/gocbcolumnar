@@ -122,7 +122,7 @@ func (e ColumnarError) Unwrap() error {
 // QueryError occurs when an error is returned in the errors field of the response body of a response
 // from the query server.
 type QueryError struct {
-	Cause   ColumnarError
+	Cause   *ColumnarError
 	Code    int
 	Message string
 }
@@ -146,7 +146,7 @@ func (e QueryError) withErrors(errors []columnarErrorDesc) *QueryError {
 // nolint: unused
 func newQueryError(statement, endpoint string, statusCode int, code int, message string) QueryError {
 	return QueryError{
-		Cause: ColumnarError{
+		Cause: &ColumnarError{
 			Cause:            ErrQuery,
 			errors:           nil,
 			statement:        statement,

@@ -10,17 +10,55 @@ on:
 
 jobs:
   test:
-    name: Test
+    name: Integration Test
+
+    strategy:
+      matrix:
+        server:
+          - 7.6.3
 
     runs-on: ubuntu-20.04
     steps:
+      - name: Install cbdinocluster
+        run: |
+          mkdir -p "$HOME/bin"
+          wget -nv -O $HOME/bin/cbdinocluster https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.41/cbdinocluster-linux-amd64
+          chmod +x $HOME/bin/cbdinocluster
+          echo "$HOME/bin" >> $GITHUB_PATH
+      - name: Initialize cbdinocluster
+        run: |
+          cbdinocluster -v init --auto
+      - name: Start couchbase cluster
+        env:
+          CLUSTERCONFIG: |
+            columnar: true
+            nodes:
+              - count: 3
+                version: 1.0.0-2239
+        run: |
+          CBDC_ID=$(cbdinocluster -v alloc --def="${CLUSTERCONFIG}")
+          cbdinocluster -v buckets add ${CBDC_ID} default --ram-quota-mb=100 --flush-enabled=true --num-replicas=2
+          cbdinocluster -v collections add ${CBDC_ID} default _default test
+          CBDC_CONNSTR=$(cbdinocluster -v connstr $CBDC_ID)
+          echo "CBDC_ID=$CBDC_ID" >> "$GITHUB_ENV"
+          echo "CBDC_CONNSTR=$CBDC_CONNSTR" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
           go-version: '1.21'
       - name: Initialize deps
         run: go get
+      - name: Generate mocks
+        run: |
+          go install github.com/matryer/moq@latest
+          go generate
       - name: Run tests
         timeout-minutes: 40
+        env:
+          CBDC_ID: # from above
+          CBDC_CONNSTR: # from above
+          GCBDINOID: ${{ env.CBDC_ID }}
+          GCBCONNSTR: ${{ env.CBDC_CONNSTR }}
         run: |
           go test ./... -v -race
