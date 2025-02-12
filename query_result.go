@@ -78,7 +78,7 @@ type QueryResultRow struct {
 	unmarshaler Unmarshaler
 }
 
-func (qrr *QueryResultRow) Content(valuePtr any) error {
+func (qrr *QueryResultRow) ContentAs(valuePtr any) error {
 	// We don't need to convert this error, if it's ours then we already have.
 	// If it's the users then we don't want to interfere with it.
 	return qrr.unmarshaler.Unmarshal(qrr.rowBytes, &valuePtr) // nolint:wrapcheck

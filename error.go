@@ -44,12 +44,12 @@ func (e columnarErrorDesc) MarshalJSON() ([]byte, error) {
 
 // ColumnarError occurs when an error is encountered while interacting with the Columnar service.
 type ColumnarError struct {
-	cause error
+	cause   error
+	message string
 
 	errors           []columnarErrorDesc
 	statement        string
 	endpoint         string
-	errorText        string
 	httpResponseCode int
 }
 
@@ -60,13 +60,13 @@ func newColumnarError(statement, endpoint string, statusCode int) ColumnarError 
 		errors:           nil,
 		statement:        statement,
 		endpoint:         endpoint,
-		errorText:        "",
+		message:          "",
 		httpResponseCode: statusCode,
 	}
 }
 
-func (e ColumnarError) withErrorText(errText string) *ColumnarError {
-	e.errorText = errText
+func (e ColumnarError) withMessage(message string) *ColumnarError {
+	e.message = message
 
 	return &e
 }
@@ -88,13 +88,13 @@ func (e ColumnarError) Error() string {
 	errBytes, _ := json.Marshal(struct {
 		Statement        string              `json:"statement,omitempty"`
 		Errors           []columnarErrorDesc `json:"errors,omitempty"`
-		ErrorText        string              `json:"errorText,omitempty"`
+		Message          string              `json:"message,omitempty"`
 		Endpoint         string              `json:"endpoint,omitempty"`
 		HTTPResponseCode int                 `json:"status_code,omitempty"`
 	}{
 		Statement:        e.statement,
 		Errors:           e.errors,
-		ErrorText:        e.errorText,
+		Message:          e.message,
 		Endpoint:         e.endpoint,
 		HTTPResponseCode: e.httpResponseCode,
 	})
@@ -122,7 +122,7 @@ func (e ColumnarError) Unwrap() error {
 // QueryError occurs when an error is returned in the errors field of the response body of a response
 // from the query server.
 type QueryError struct {
-	cause   ColumnarError
+	cause   *ColumnarError
 	code    int
 	message string
 }
@@ -156,12 +156,12 @@ func (e QueryError) withErrors(errors []columnarErrorDesc) *QueryError {
 // nolint: unused
 func newQueryError(statement, endpoint string, statusCode int, code int, message string) QueryError {
 	return QueryError{
-		cause: ColumnarError{
+		cause: &ColumnarError{
 			cause:            ErrQuery,
 			errors:           nil,
 			statement:        statement,
 			endpoint:         endpoint,
-			errorText:        "",
+			message:          "",
 			httpResponseCode: statusCode,
 		},
 		code:    code,

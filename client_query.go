@@ -15,15 +15,23 @@ type queryClient interface {
 	Query(ctx context.Context, statement string, opts *QueryOptions) (*QueryResult, error)
 }
 
+type gocbcoreQueryClientNamespace struct {
+	Database string
+	Scope    string
+}
 type gocbcoreQueryClient struct {
 	agent                     *gocbcore.ColumnarAgent
 	defaultServerQueryTimeout time.Duration
+	defaultUnmarshaler        Unmarshaler
+	namespace                 *gocbcoreQueryClientNamespace
 }
 
-func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultServerQueryTimeout time.Duration) *gocbcoreQueryClient {
+func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultServerQueryTimeout time.Duration, defaultUnmarshaler Unmarshaler, namespace *gocbcoreQueryClientNamespace) *gocbcoreQueryClient {
 	return &gocbcoreQueryClient{
 		agent:                     agent,
 		defaultServerQueryTimeout: defaultServerQueryTimeout,
+		defaultUnmarshaler:        defaultUnmarshaler,
+		namespace:                 namespace,
 	}
 }
 
@@ -33,14 +41,23 @@ func (c *gocbcoreQueryClient) Query(ctx context.Context, statement string, opts 
 		return nil, err
 	}
 
+	if c.namespace != nil {
+		coreOpts.Payload["query_context"] = fmt.Sprintf("default:`%s`.`%s`", c.namespace.Database, c.namespace.Scope)
+	}
+
 	res, err := c.agent.Query(ctx, *coreOpts)
 	if err != nil {
 		return nil, translateGocbcoreError(err)
 	}
 
+	unmarshaler := opts.Unmarshaler
+	if unmarshaler == nil {
+		unmarshaler = c.defaultUnmarshaler
+	}
+
 	return &QueryResult{
 		reader:      c.newRowReader(res),
-		unmarshaler: opts.Unmarshaler,
+		unmarshaler: unmarshaler,
 	}, nil
 }
 
@@ -181,7 +198,7 @@ func translateGocbcoreError(err error) error {
 
 	if coreErr.HTTPResponseCode == 401 {
 		return newColumnarError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode).
-			withErrorText(coreErr.ErrorText).
+			withMessage(coreErr.InnerError.Error()).
 			withCause(ErrInvalidCredential)
 	}
 
@@ -213,24 +230,26 @@ func translateGocbcoreError(err error) error {
 	}
 
 	baseErr := newColumnarError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode).
-		withErrorText(coreErr.ErrorText)
+		withMessage(coreErr.InnerError.Error())
 
 	switch {
 	case errors.Is(coreErr.InnerError, gocbcore.ErrTimeout):
 		baseErr.cause = ErrTimeout
 		if coreErr.WasNotDispatched {
-			baseErr.errorText = "operation not sent to server, as timeout would be exceeded"
+			baseErr.message = "operation not sent to server, as timeout would be exceeded"
 		}
 	case errors.Is(coreErr.InnerError, context.Canceled):
 		baseErr.cause = context.Canceled
 		if coreErr.WasNotDispatched {
-			baseErr.errorText = "operation not sent to server, as context was cancelled"
+			baseErr.message = "operation not sent to server, as context was cancelled"
 		}
 	case errors.Is(coreErr.InnerError, context.DeadlineExceeded):
 		baseErr.cause = context.DeadlineExceeded
 		if coreErr.WasNotDispatched {
-			baseErr.errorText = "operation not sent to server, as context deadline would be exceeded"
+			baseErr.message = "operation not sent to server, as context deadline would be exceeded"
 		}
+	case errors.Is(coreErr.InnerError, gocbcore.ErrAuthenticationFailure):
+		baseErr.cause = ErrInvalidCredential
 	}
 
 	return baseErr

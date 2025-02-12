@@ -13,11 +13,9 @@ import (
 
 type Cluster struct {
 	client clusterClient
-
-	timeoutsConfig TimeoutOptions
 }
 
-func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cluster, error) {
+func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*Cluster, error) {
 	connSpec, err := gocbconnstr.Parse(connStr)
 	if err != nil {
 		return nil, err
@@ -30,21 +28,35 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 		}
 	}
 
+	if opts == nil {
+		opts = NewClusterOptions()
+	}
+
 	connectTimeout := 10000 * time.Millisecond
 	dispatchTimeout := 30000 * time.Millisecond
 	serverQueryTimeout := 10 * time.Minute
 	useSrv := true
 
-	if opts.TimeoutOptions.ConnectTimeout != nil {
-		connectTimeout = *opts.TimeoutOptions.ConnectTimeout
+	timeoutOpts := opts.TimeoutOptions
+	if timeoutOpts == nil {
+		timeoutOpts = NewTimeoutOptions()
 	}
 
-	if opts.TimeoutOptions.DispatchTimeout != nil {
-		dispatchTimeout = *opts.TimeoutOptions.DispatchTimeout
+	securityOpts := opts.SecurityOptions
+	if securityOpts == nil {
+		securityOpts = NewSecurityOptions()
 	}
 
-	if opts.TimeoutOptions.ServerQueryTimeout != nil {
-		serverQueryTimeout = *opts.TimeoutOptions.ServerQueryTimeout
+	if timeoutOpts.ConnectTimeout != nil {
+		connectTimeout = *timeoutOpts.ConnectTimeout
+	}
+
+	if timeoutOpts.DispatchTimeout != nil {
+		dispatchTimeout = *timeoutOpts.DispatchTimeout
+	}
+
+	if timeoutOpts.ServerQueryTimeout != nil {
+		serverQueryTimeout = *timeoutOpts.ServerQueryTimeout
 	}
 
 	fetchOption := func(name string) (string, bool) {
@@ -105,7 +117,7 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 	}
 
 	if valStr, ok := fetchOption("security.trust_only_pem_file"); ok {
-		opts.SecurityOptions.TrustOnly = TrustOnlyPemFile{
+		securityOpts.TrustOnly = TrustOnlyPemFile{
 			Path: valStr,
 		}
 	}
@@ -119,18 +131,18 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 			}
 		}
 
-		opts.SecurityOptions.DisableServerCertificateVerification = &val
+		securityOpts.DisableServerCertificateVerification = &val
 	}
 
 	if valStr, ok := fetchOption("security.cipher_suites"); ok {
 		split := strings.Split(valStr, ",")
 
-		opts.SecurityOptions.CipherSuites = split
+		securityOpts.CipherSuites = split
 	}
 
-	cipherSuites := make([]*tls.CipherSuite, len(opts.SecurityOptions.CipherSuites))
+	cipherSuites := make([]*tls.CipherSuite, len(securityOpts.CipherSuites))
 
-	for i, suite := range opts.SecurityOptions.CipherSuites {
+	for i, suite := range securityOpts.CipherSuites {
 		var s *tls.CipherSuite
 
 		for _, supportedSuite := range tls.CipherSuites() {
@@ -211,26 +223,35 @@ func NewCluster(connStr string, credential Credential, opts ClusterOptions) (*Cl
 		}
 	}
 
+	unmarshaler := opts.Unmarshaler
+	if unmarshaler == nil {
+		unmarshaler = NewJSONUnmarshaler()
+	}
+
 	mgr, err := newClusterClient(clusterClientOptions{
 		Spec:                                 connSpec,
 		Credential:                           &credential,
 		ConnectTimeout:                       connectTimeout,
 		DispatchTimeout:                      dispatchTimeout,
 		ServerQueryTimeout:                   serverQueryTimeout,
-		TrustOnly:                            opts.SecurityOptions.TrustOnly,
-		DisableServerCertificateVerification: opts.SecurityOptions.DisableServerCertificateVerification,
+		TrustOnly:                            securityOpts.TrustOnly,
+		DisableServerCertificateVerification: securityOpts.DisableServerCertificateVerification,
 		CipherSuites:                         cipherSuites,
 		DisableSrv:                           !useSrv,
 		Addresses:                            addrs,
+		Unmarshaler:                          unmarshaler,
 	})
 	if err != nil {
 		return nil, err
 	}
 
 	c := &Cluster{
-		client:         mgr,
-		timeoutsConfig: opts.TimeoutOptions,
+		client: mgr,
 	}
 
 	return c, nil
+}
+
+func (c *Cluster) Close() error {
+	return c.client.Close()
 }

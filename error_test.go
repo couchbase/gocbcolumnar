@@ -10,7 +10,7 @@ import (
 func TestQueryErrorAsColumnarError(t *testing.T) {
 	err := newQueryError("select *", "endpoint", 200, 23, "message")
 
-	var columnarError ColumnarError
+	var columnarError *ColumnarError
 
 	require.ErrorAs(t, err, &columnarError)
 }
