@@ -13,6 +13,8 @@ linters-settings:
   wrapcheck:
     ignorePackageGlobs:
       - github.com/couchbaselabs/gocbconnstr
+      - crypto/x509
     ignoreInterfaceRegexps:
       - "analyticsRowReader"
       - "queryClient"
+

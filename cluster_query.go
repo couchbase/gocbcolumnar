@@ -21,6 +21,7 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 		PositionalParameters: nil,
 		NamedParameters:      nil,
 		ReadOnly:             nil,
+		ServerQueryTimeout:   nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		Unmarshaler:          nil,
@@ -57,6 +58,10 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 
 		if opt.Unmarshaler != nil {
 			queryOpts.Unmarshaler = opt.Unmarshaler
+		}
+
+		if opt.ServerQueryTimeout != nil {
+			queryOpts.ServerQueryTimeout = opt.ServerQueryTimeout
 		}
 	}
 
