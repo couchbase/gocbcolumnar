@@ -1,5 +1,7 @@
 package cbcolumnar
 
+import "time"
+
 // QueryScanConsistency indicates the level of data consistency desired for an analytics query.
 type QueryScanConsistency uint
 
@@ -19,6 +21,8 @@ type QueryOptions struct {
 	ReadOnly             *bool
 	ScanConsistency      *QueryScanConsistency
 
+	ServerQueryTimeout *time.Duration
+
 	// Raw provides a way to provide extra parameters in the request body for the query.
 	Raw map[string]interface{}
 
@@ -32,6 +36,7 @@ func NewQueryOptions() *QueryOptions {
 		PositionalParameters: nil,
 		NamedParameters:      nil,
 		ReadOnly:             nil,
+		ServerQueryTimeout:   nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		Unmarshaler:          nil,
@@ -68,59 +73,14 @@ func (opts *QueryOptions) SetScanConsistency(scanConsistency QueryScanConsistenc
 	return opts
 }
 
+func (opts *QueryOptions) SetServerQueryTimeout(timeout time.Duration) *QueryOptions {
+	opts.ServerQueryTimeout = &timeout
+
+	return opts
+}
+
 func (opts *QueryOptions) SetRaw(raw map[string]interface{}) *QueryOptions {
 	opts.Raw = raw
 
 	return opts
 }
-
-// This will be required soon.
-// func (opts *QueryOptions) toMap() (map[string]interface{}, error) {
-// 	execOpts := make(map[string]interface{})
-//
-// 	execOpts["client_context_id"] = uuid.New().String()
-//
-// 	if opts.ScanConsistency != nil {
-// 		switch *opts.ScanConsistency {
-// 		case QueryScanConsistencyNotBounded:
-// 			execOpts["scan_consistency"] = "not_bounded"
-// 		case QueryScanConsistencyRequestPlus:
-// 			execOpts["scan_consistency"] = "request_plus"
-// 		default:
-// 			return nil, makeInvalidArgumentsError("unexpected consistency option")
-// 		}
-// 	}
-//
-// 	if opts.PositionalParameters != nil && opts.NamedParameters != nil {
-// 		return nil, makeInvalidArgumentsError("positional and named parameters must be used exclusively")
-// 	}
-//
-// 	if opts.PositionalParameters != nil {
-// 		execOpts["args"] = opts.PositionalParameters
-// 	}
-//
-// 	if opts.NamedParameters != nil {
-// 		for key, value := range opts.NamedParameters {
-// 			if !strings.HasPrefix(key, "$") {
-// 				key = "$" + key
-// 			}
-// 			execOpts[key] = value
-// 		}
-// 	}
-//
-// 	if opts.ReadOnly != nil {
-// 		execOpts["readonly"] = *opts.ReadOnly
-// 	}
-//
-// 	if opts.Raw != nil {
-// 		for k, v := range opts.Raw {
-// 			execOpts[k] = v
-// 		}
-// 	}
-//
-// 	if opts.ServerTimeout != nil {
-// 		execOpts["timeout"] = opts.ServerTimeout.String()
-// 	}
-//
-// 	return execOpts, nil
-// }

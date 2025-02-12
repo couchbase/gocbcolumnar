@@ -8,7 +8,7 @@ import (
 )
 
 func TestQueryErrorAsColumnarError(t *testing.T) {
-	err := newQueryError(nil, 23, "message")
+	err := newQueryError("select *", "endpoint", 200, 23, "message")
 
 	var columnarError ColumnarError
 
@@ -16,13 +16,13 @@ func TestQueryErrorAsColumnarError(t *testing.T) {
 }
 
 func TestQueryErrorIsErrQuery(t *testing.T) {
-	err := newQueryError(nil, 23, "message")
+	err := newQueryError("select *", "endpoint", 200, 23, "message")
 
 	require.ErrorIs(t, err, ErrQuery)
 }
 
 func TestQueryErrorAsQueryError(t *testing.T) {
-	err := newQueryError(nil, 23, "message")
+	err := newQueryError("select *", "endpoint", 200, 23, "message")
 
 	var queryError QueryError
 
