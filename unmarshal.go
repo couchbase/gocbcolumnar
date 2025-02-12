@@ -8,7 +8,11 @@ type Unmarshaler interface {
 
 type JSONUnmarshaler struct{}
 
-func (ju JSONUnmarshaler) Unmarshal(data []byte, v interface{}) error {
+func NewJSONUnmarshaler() *JSONUnmarshaler {
+	return &JSONUnmarshaler{}
+}
+
+func (ju *JSONUnmarshaler) Unmarshal(data []byte, v interface{}) error {
 	err := json.Unmarshal(data, v)
 	if err != nil {
 		return unmarshalError{

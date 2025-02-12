@@ -34,6 +34,7 @@ type clusterClientOptions struct {
 	CipherSuites                         []*tls.CipherSuite
 	DisableSrv                           bool
 	Addresses                            []address
+	Unmarshaler                          Unmarshaler
 }
 
 func newClusterClient(opts clusterClientOptions) (clusterClient, error) {
@@ -44,12 +45,19 @@ type gocbcoreClusterClient struct {
 	agent *gocbcore.ColumnarAgent
 
 	serverQueryTimeout time.Duration
+	unmarshaler        Unmarshaler
 }
 
 func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient, error) {
 	addresses := make([]string, len(opts.Addresses))
+
 	for i, addr := range opts.Addresses {
-		addresses[i] = fmt.Sprintf("%s:%d", addr.Host, addr.Port)
+		port := addr.Port
+		if port == -1 {
+			port = 11207
+		}
+
+		addresses[i] = fmt.Sprintf("%s:%d", addr.Host, port)
 	}
 
 	var srvRecord *gocbcore.SRVRecord
@@ -158,15 +166,16 @@ func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient
 	return &gocbcoreClusterClient{
 		agent:              agent,
 		serverQueryTimeout: opts.ServerQueryTimeout,
+		unmarshaler:        opts.Unmarshaler,
 	}, nil
 }
 
 func (c *gocbcoreClusterClient) Database(name string) databaseClient {
-	return newGocbcoreDatabaseClient(c.agent, name, c.serverQueryTimeout)
+	return newGocbcoreDatabaseClient(c.agent, name, c.serverQueryTimeout, c.unmarshaler)
 }
 
 func (c *gocbcoreClusterClient) QueryClient() queryClient {
-	return newGocbcoreQueryClient(c.agent, c.serverQueryTimeout)
+	return newGocbcoreQueryClient(c.agent, c.serverQueryTimeout, c.unmarshaler, nil)
 }
 
 func (c *gocbcoreClusterClient) Close() error {

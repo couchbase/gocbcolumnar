@@ -15,13 +15,15 @@ type gocbcoreDatabaseClient struct {
 	agent                     *gocbcore.ColumnarAgent
 	name                      string
 	defaultServerQueryTimeout time.Duration
+	defaultUnmarshaler        Unmarshaler
 }
 
-func newGocbcoreDatabaseClient(agent *gocbcore.ColumnarAgent, name string, defaultServerQueryTimeout time.Duration) *gocbcoreDatabaseClient {
+func newGocbcoreDatabaseClient(agent *gocbcore.ColumnarAgent, name string, defaultServerQueryTimeout time.Duration, defaultUnmarshaler Unmarshaler) *gocbcoreDatabaseClient {
 	return &gocbcoreDatabaseClient{
 		agent:                     agent,
 		name:                      name,
 		defaultServerQueryTimeout: defaultServerQueryTimeout,
+		defaultUnmarshaler:        defaultUnmarshaler,
 	}
 }
 
@@ -30,5 +32,5 @@ func (c *gocbcoreDatabaseClient) Name() string {
 }
 
 func (c *gocbcoreDatabaseClient) Scope(name string) scopeClient {
-	return newGocbcoreScopeClient(c.agent, name, c.defaultServerQueryTimeout)
+	return newGocbcoreScopeClient(c.agent, name, c.name, c.defaultServerQueryTimeout, c.defaultUnmarshaler)
 }

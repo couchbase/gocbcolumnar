@@ -58,6 +58,14 @@ type SecurityOptions struct {
 	CipherSuites []string
 }
 
+func NewSecurityOptions() *SecurityOptions {
+	return &SecurityOptions{
+		TrustOnly:                            TrustOnlyCapella{},
+		DisableServerCertificateVerification: nil,
+		CipherSuites:                         nil,
+	}
+}
+
 func (opts *SecurityOptions) SetTrustOnly(trustOnly TrustOnly) *SecurityOptions {
 	opts.TrustOnly = trustOnly
 
@@ -93,6 +101,14 @@ type TimeoutOptions struct {
 	ServerQueryTimeout *time.Duration
 }
 
+func NewTimeoutOptions() *TimeoutOptions {
+	return &TimeoutOptions{
+		ConnectTimeout:     nil,
+		DispatchTimeout:    nil,
+		ServerQueryTimeout: nil,
+	}
+}
+
 func (opts *TimeoutOptions) SetConnectTimeout(timeout time.Duration) *TimeoutOptions {
 	opts.ConnectTimeout = &timeout
 
@@ -113,10 +129,10 @@ func (opts *TimeoutOptions) SetServerQueryTimeout(timeout time.Duration) *Timeou
 
 type ClusterOptions struct {
 	// TimeoutOptions specifies various operation timeouts.
-	TimeoutOptions TimeoutOptions
+	TimeoutOptions *TimeoutOptions
 
 	// SecurityOptions specifies security related configuration options.
-	SecurityOptions SecurityOptions
+	SecurityOptions *SecurityOptions
 
 	// Unmarshaler specifies the default unmarshaler to use for decoding query response rows.
 	Unmarshaler Unmarshaler
@@ -124,12 +140,12 @@ type ClusterOptions struct {
 
 func NewClusterOptions() *ClusterOptions {
 	return &ClusterOptions{
-		TimeoutOptions: TimeoutOptions{
+		TimeoutOptions: &TimeoutOptions{
 			ConnectTimeout:     nil,
 			DispatchTimeout:    nil,
 			ServerQueryTimeout: nil,
 		},
-		SecurityOptions: SecurityOptions{
+		SecurityOptions: &SecurityOptions{
 			TrustOnly:                            TrustOnlyCapella{},
 			DisableServerCertificateVerification: nil,
 			CipherSuites:                         nil,
@@ -138,13 +154,13 @@ func NewClusterOptions() *ClusterOptions {
 	}
 }
 
-func (co *ClusterOptions) SetTimeoutOptions(timeoutOptions TimeoutOptions) *ClusterOptions {
+func (co *ClusterOptions) SetTimeoutOptions(timeoutOptions *TimeoutOptions) *ClusterOptions {
 	co.TimeoutOptions = timeoutOptions
 
 	return co
 }
 
-func (co *ClusterOptions) SetSecurityOptions(securityOptions SecurityOptions) *ClusterOptions {
+func (co *ClusterOptions) SetSecurityOptions(securityOptions *SecurityOptions) *ClusterOptions {
 	co.SecurityOptions = securityOptions
 
 	return co
