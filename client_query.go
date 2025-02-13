@@ -196,7 +196,7 @@ func translateGocbcoreError(err error) error {
 		return err
 	}
 
-	if coreErr.HTTPResponseCode == 401 {
+	if coreErr.HTTPResponseCode == 401 || errors.Is(err, gocbcore.ErrAuthenticationFailure) {
 		return newColumnarError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode).
 			withMessage(coreErr.InnerError.Error()).
 			withCause(ErrInvalidCredential)
@@ -250,6 +250,8 @@ func translateGocbcoreError(err error) error {
 		}
 	case errors.Is(coreErr.InnerError, gocbcore.ErrAuthenticationFailure):
 		baseErr.cause = ErrInvalidCredential
+	default:
+		baseErr.cause = errors.New(err.Error()) // nolint: err113
 	}
 
 	return baseErr
