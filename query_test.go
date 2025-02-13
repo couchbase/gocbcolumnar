@@ -49,6 +49,10 @@ func TestDispatchTimeout(t *testing.T) {
 	require.NoError(t, err)
 	defer cluster.Close()
 
+	// We're purposely using an invalid hostname so we need to suppress warnings.
+	globalTestLogger.SuppressWarnings(true)
+	defer globalTestLogger.SuppressWarnings(false)
+
 	t.Run("Context Deadline", func(tt *testing.T) {
 		ExecuteQueryAgainst(tt, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(ttt *testing.T, queryable Queryable) {
 			ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
