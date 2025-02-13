@@ -155,7 +155,8 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 
 		for _, unsupportedSuite := range tls.InsecureCipherSuites() {
 			if unsupportedSuite.Name == suite {
-				// TODO: Log warning if this is the case
+				logWarnf("cipher suite %s is insecure, it is not recommended to use this", suite)
+
 				s = unsupportedSuite
 
 				break
@@ -226,6 +227,10 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 	unmarshaler := opts.Unmarshaler
 	if unmarshaler == nil {
 		unmarshaler = NewJSONUnmarshaler()
+	}
+
+	if opts.SecurityOptions.DisableServerCertificateVerification != nil && *opts.SecurityOptions.DisableServerCertificateVerification {
+		logWarnf("server certificate verification is disabled, this is insecure")
 	}
 
 	mgr, err := newClusterClient(clusterClientOptions{
