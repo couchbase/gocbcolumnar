@@ -196,9 +196,9 @@ func translateGocbcoreError(err error) error {
 		return err
 	}
 
-	if coreErr.HTTPResponseCode == 401 {
+	if coreErr.HTTPResponseCode == 401 || errors.Is(err, gocbcore.ErrAuthenticationFailure) {
 		return newColumnarError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode).
-			withErrorText(coreErr.ErrorText).
+			withErrorText(err.Error()).
 			withCause(ErrInvalidCredential)
 	}
 
@@ -248,6 +248,8 @@ func translateGocbcoreError(err error) error {
 		if coreErr.WasNotDispatched {
 			baseErr.errorText = "operation not sent to server, as context deadline would be exceeded"
 		}
+	default:
+		baseErr.Cause = errors.New(err.Error())
 	}
 
 	return baseErr
