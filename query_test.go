@@ -42,6 +42,10 @@ func TestBasicQuery(t *testing.T) {
 }
 
 func TestDispatchTimeout(t *testing.T) {
+	// We're purposely using an invalid hostname so we need to suppress warnings.
+	globalTestLogger.SuppressWarnings(true)
+	defer globalTestLogger.SuppressWarnings(false)
+
 	newCluster := func(tt *testing.T, dispatchTimeout time.Duration) *cbcolumnar.Cluster {
 		cluster, err := cbcolumnar.NewCluster("couchbases://somenonsense?srv=false",
 			cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password),
