@@ -205,8 +205,11 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 	if useSrv {
 		_, srvAddrs, err := net.LookupSRV("couchbases", "tcp", connSpec.Addresses[0].Host)
 		if err != nil {
-			// We're fine returning the net error here.
-			return nil, err // nolint: wrapcheck
+			if isLogRedactionLevelFull() {
+				logInfof("Failed to lookup SRV record: %s", redactSystemData(err))
+			} else {
+				logInfof("Failed to lookup SRV record: %s", err)
+			}
 		}
 
 		for _, srvAddrs := range srvAddrs {
