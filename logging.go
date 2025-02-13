@@ -44,12 +44,20 @@ func SetLogRedactionLevel(level LogRedactLevel) {
 	gocbcore.SetLogRedactionLevel(gocbcore.LogRedactLevel(level))
 }
 
+func isLogRedactionLevelFull() bool {
+	return globalLogRedactionLevel == RedactFull
+}
+
 func redactUserDataString(v string) string {
 	return "<ud>" + v + "</ud>"
 }
 
 func redactSystemDataString(v string) string {
 	return "<sd>" + v + "</sd>"
+}
+
+func redactSystemData(v interface{}) string {
+	return fmt.Sprintf("<sd>%v</sd>", v)
 }
 
 // Logger defines a logging interface. You can either use one of the default loggers
