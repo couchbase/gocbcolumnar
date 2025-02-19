@@ -63,10 +63,15 @@ func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient
 	var srvRecord *gocbcore.SRVRecord
 
 	if !opts.DisableSrv {
+		var host string
+		if len(opts.Addresses) > 0 {
+			host = opts.Addresses[0].Host
+		}
+
 		srvRecord = &gocbcore.SRVRecord{
 			Proto:  "tcp",
 			Scheme: "couchbases",
-			Host:   opts.Addresses[0].Host,
+			Host:   host,
 		}
 	}
 
@@ -126,7 +131,7 @@ func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient
 	}
 
 	coreOpts := &gocbcore.ColumnarAgentConfig{
-		UserAgent:       "couchbase-go-columnar",
+		UserAgent:       "gocbcolumnar",
 		ConnectTimeout:  opts.ConnectTimeout,
 		DispatchTimeout: opts.DispatchTimeout,
 		SeedConfig: gocbcore.ColumnarSeedConfig{
