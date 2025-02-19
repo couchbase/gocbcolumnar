@@ -84,3 +84,9 @@ func (opts *QueryOptions) SetRaw(raw map[string]interface{}) *QueryOptions {
 
 	return opts
 }
+
+func (opts *QueryOptions) SetUnmarshaler(unmarshaler Unmarshaler) *QueryOptions {
+	opts.Unmarshaler = unmarshaler
+
+	return opts
+}
