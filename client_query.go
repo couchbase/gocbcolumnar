@@ -8,6 +8,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/couchbase/gocbcore/v10"
 )
 
@@ -44,6 +46,8 @@ func (c *gocbcoreQueryClient) Query(ctx context.Context, statement string, opts 
 	if c.namespace != nil {
 		coreOpts.Payload["query_context"] = fmt.Sprintf("default:`%s`.`%s`", c.namespace.Database, c.namespace.Scope)
 	}
+
+	coreOpts.Payload["client_context_id"] = uuid.NewString()
 
 	res, err := c.agent.Query(ctx, *coreOpts)
 	if err != nil {
@@ -203,7 +207,7 @@ func translateGocbcoreError(err error) error {
 	}
 
 	if len(coreErr.Errors) > 0 {
-		code := int(coreErr.Errors[0].Code)
+		var firstNonRetriableErr *columnarErrorDesc
 
 		descs := make([]columnarErrorDesc, len(coreErr.Errors))
 		for i, desc := range coreErr.Errors {
@@ -211,6 +215,22 @@ func translateGocbcoreError(err error) error {
 				Code:    desc.Code,
 				Message: desc.Message,
 			}
+
+			if firstNonRetriableErr == nil && !desc.Retry {
+				firstNonRetriableErr = &descs[i]
+			}
+		}
+
+		var code int
+
+		var msg string
+
+		if firstNonRetriableErr == nil {
+			code = int(coreErr.Errors[0].Code)
+			msg = coreErr.Errors[0].Message
+		} else {
+			code = int(firstNonRetriableErr.Code)
+			msg = firstNonRetriableErr.Message
 		}
 
 		if code == 20000 {
@@ -225,8 +245,19 @@ func translateGocbcoreError(err error) error {
 				withCause(ErrTimeout)
 		}
 
-		return newQueryError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode, code, coreErr.Errors[0].Message).
+		qErr := newQueryError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode, code, msg).
 			withErrors(descs)
+
+		switch {
+		case errors.Is(coreErr.InnerError, gocbcore.ErrTimeout):
+			qErr.cause.cause = ErrTimeout
+		case errors.Is(coreErr.InnerError, context.Canceled):
+			qErr.cause.cause = context.Canceled
+		case errors.Is(coreErr.InnerError, context.DeadlineExceeded):
+			qErr.cause.cause = context.DeadlineExceeded
+		}
+
+		return qErr
 	}
 
 	baseErr := newColumnarError(coreErr.Statement, coreErr.Endpoint, coreErr.HTTPResponseCode).
