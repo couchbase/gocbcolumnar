@@ -7,6 +7,7 @@ linters:
     - gofmt
     - nilnil
     - nlreturn
+    - revive
     - wrapcheck
     - wsl
 linters-settings:
@@ -18,4 +19,9 @@ linters-settings:
       - "analyticsRowReader"
       - "queryClient"
       - "clusterClient"
+issues:
+  exclude-use-default: false
 
+  include:
+    - EXC0013
+    - EXC0014

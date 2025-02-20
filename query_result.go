@@ -34,6 +34,7 @@ type QueryResult struct {
 	unmarshaler Unmarshaler
 }
 
+// NextRow returns the next row in the result set, or nil if there are no more rows.
 func (r *QueryResult) NextRow() *QueryResultRow {
 	rowBytes := r.reader.NextRow()
 	if rowBytes == nil {
@@ -72,18 +73,21 @@ func (r *QueryResult) MetaData() (*QueryMetadata, error) {
 	return meta, nil
 }
 
+// QueryResultRow encapsulates a single row of a query result.
 type QueryResultRow struct {
 	rowBytes []byte
 
 	unmarshaler Unmarshaler
 }
 
+// ContentAs will attempt to unmarshal the content of the row into the provided value pointer.
 func (qrr *QueryResultRow) ContentAs(valuePtr any) error {
 	// We don't need to convert this error, if it's ours then we already have.
 	// If it's the users then we don't want to interfere with it.
 	return qrr.unmarshaler.Unmarshal(qrr.rowBytes, &valuePtr) // nolint:wrapcheck
 }
 
+// BufferQueryResult will buffer all rows in the result set into memory and return them as a slice, with any metadata.
 func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, error) {
 	if result == nil {
 		return nil, nil, invalidArgumentError{
@@ -114,6 +118,7 @@ func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, e
 	return buffered, meta, nil
 }
 
+// RowHandler is a function signature that can be used to handle rows as they are streamed from the server.
 type RowHandler func(row *QueryResultRow) error
 
 // IterateQueryResult results will iterate over all rows in the result set and call the handler for each row.
@@ -166,7 +171,9 @@ func iterateResults(result *QueryResult, handler RowHandler) error {
 				unmarshaler: result.unmarshaler,
 			})
 			if err != nil {
-				result.reader.Close()
+				if e := result.reader.Close(); e != nil {
+					logInfof("Failed to close result: %s", e)
+				}
 
 				return err
 			}

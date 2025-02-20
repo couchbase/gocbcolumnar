@@ -58,6 +58,7 @@ type SecurityOptions struct {
 	CipherSuites []string
 }
 
+// NewSecurityOptions creates a new instance of SecurityOptions.
 func NewSecurityOptions() *SecurityOptions {
 	return &SecurityOptions{
 		TrustOnly:                            TrustOnlyCapella{},
@@ -66,18 +67,21 @@ func NewSecurityOptions() *SecurityOptions {
 	}
 }
 
+// SetTrustOnly sets the TrustOnly field in SecurityOptions.
 func (opts *SecurityOptions) SetTrustOnly(trustOnly TrustOnly) *SecurityOptions {
 	opts.TrustOnly = trustOnly
 
 	return opts
 }
 
+// SetDisableServerCertificateVerification sets the DisableServerCertificateVerification field in SecurityOptions.
 func (opts *SecurityOptions) SetDisableServerCertificateVerification(disabled bool) *SecurityOptions {
 	opts.DisableServerCertificateVerification = &disabled
 
 	return opts
 }
 
+// SetCipherSuites sets the CipherSuites field in SecurityOptions.
 func (opts *SecurityOptions) SetCipherSuites(cipherSuites []string) *SecurityOptions {
 	opts.CipherSuites = cipherSuites
 
@@ -101,6 +105,7 @@ type TimeoutOptions struct {
 	ServerQueryTimeout *time.Duration
 }
 
+// NewTimeoutOptions creates a new instance of TimeoutOptions.
 func NewTimeoutOptions() *TimeoutOptions {
 	return &TimeoutOptions{
 		ConnectTimeout:     nil,
@@ -109,24 +114,28 @@ func NewTimeoutOptions() *TimeoutOptions {
 	}
 }
 
+// SetConnectTimeout sets the ConnectTimeout field in TimeoutOptions.
 func (opts *TimeoutOptions) SetConnectTimeout(timeout time.Duration) *TimeoutOptions {
 	opts.ConnectTimeout = &timeout
 
 	return opts
 }
 
+// SetDispatchTimeout sets the DispatchTimeout field in TimeoutOptions.
 func (opts *TimeoutOptions) SetDispatchTimeout(timeout time.Duration) *TimeoutOptions {
 	opts.DispatchTimeout = &timeout
 
 	return opts
 }
 
+// SetServerQueryTimeout sets the ServerQueryTimeout field in TimeoutOptions.
 func (opts *TimeoutOptions) SetServerQueryTimeout(timeout time.Duration) *TimeoutOptions {
 	opts.ServerQueryTimeout = &timeout
 
 	return opts
 }
 
+// ClusterOptions specifies options for configuring the cluster.
 type ClusterOptions struct {
 	// TimeoutOptions specifies various operation timeouts.
 	TimeoutOptions *TimeoutOptions
@@ -138,6 +147,7 @@ type ClusterOptions struct {
 	Unmarshaler Unmarshaler
 }
 
+// NewClusterOptions creates a new instance of ClusterOptions.
 func NewClusterOptions() *ClusterOptions {
 	return &ClusterOptions{
 		TimeoutOptions: &TimeoutOptions{
@@ -154,20 +164,87 @@ func NewClusterOptions() *ClusterOptions {
 	}
 }
 
+// SetTimeoutOptions sets the TimeoutOptions field in ClusterOptions.
 func (co *ClusterOptions) SetTimeoutOptions(timeoutOptions *TimeoutOptions) *ClusterOptions {
 	co.TimeoutOptions = timeoutOptions
 
 	return co
 }
 
+// SetSecurityOptions sets the SecurityOptions field in ClusterOptions.
 func (co *ClusterOptions) SetSecurityOptions(securityOptions *SecurityOptions) *ClusterOptions {
 	co.SecurityOptions = securityOptions
 
 	return co
 }
 
+// SetUnmarshaler sets the Unmarshaler field in ClusterOptions.
 func (co *ClusterOptions) SetUnmarshaler(unmarshaler Unmarshaler) *ClusterOptions {
 	co.Unmarshaler = unmarshaler
 
 	return co
+}
+
+func mergeClusterOptions(opts ...*ClusterOptions) *ClusterOptions {
+	clusterOpts := &ClusterOptions{
+		TimeoutOptions:  nil,
+		SecurityOptions: nil,
+		Unmarshaler:     nil,
+	}
+
+	for _, opt := range opts {
+		if opt == nil {
+			continue
+		}
+
+		if opt.TimeoutOptions != nil {
+			if clusterOpts.TimeoutOptions == nil {
+				clusterOpts.TimeoutOptions = &TimeoutOptions{
+					ConnectTimeout:     nil,
+					DispatchTimeout:    nil,
+					ServerQueryTimeout: nil,
+				}
+			}
+
+			if opt.TimeoutOptions.ConnectTimeout != nil {
+				clusterOpts.TimeoutOptions.ConnectTimeout = opt.TimeoutOptions.ConnectTimeout
+			}
+
+			if opt.TimeoutOptions.DispatchTimeout != nil {
+				clusterOpts.TimeoutOptions.DispatchTimeout = opt.TimeoutOptions.DispatchTimeout
+			}
+
+			if opt.TimeoutOptions.ServerQueryTimeout != nil {
+				clusterOpts.TimeoutOptions.ServerQueryTimeout = opt.TimeoutOptions.ServerQueryTimeout
+			}
+		}
+
+		if opt.SecurityOptions != nil {
+			if clusterOpts.SecurityOptions == nil {
+				clusterOpts.SecurityOptions = &SecurityOptions{
+					TrustOnly:                            nil,
+					DisableServerCertificateVerification: nil,
+					CipherSuites:                         nil,
+				}
+			}
+
+			if opt.SecurityOptions.TrustOnly != nil {
+				clusterOpts.SecurityOptions.TrustOnly = opt.SecurityOptions.TrustOnly
+			}
+
+			if opt.SecurityOptions.DisableServerCertificateVerification != nil {
+				clusterOpts.SecurityOptions.DisableServerCertificateVerification = opt.SecurityOptions.DisableServerCertificateVerification
+			}
+
+			if len(opt.SecurityOptions.CipherSuites) > 0 {
+				clusterOpts.SecurityOptions.CipherSuites = opt.SecurityOptions.CipherSuites
+			}
+		}
+
+		if opt.Unmarshaler != nil {
+			clusterOpts.Unmarshaler = opt.Unmarshaler
+		}
+	}
+
+	return clusterOpts
 }

@@ -39,6 +39,7 @@ func waitForNumGoroutines(expectedGoroutineCount int) int {
 	return finalGoroutineCount
 }
 
+// PrecheckGoroutines should be called before any goroutines are started to ensure that there are no extra goroutines.
 func PrecheckGoroutines() {
 	// This needs to match the value below.
 	expectedGoroutineCount := 1
@@ -56,6 +57,7 @@ func PrecheckGoroutines() {
 	}
 }
 
+// ReportLeakedGoroutines should be called after all goroutines have been stopped to ensure that there are no leaked goroutines.
 func ReportLeakedGoroutines() bool {
 	// We always expect that only the current goroutine is running.  This assumption
 	// is based on the fact that it would not be considered safe to be checking for leaked

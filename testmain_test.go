@@ -117,7 +117,12 @@ func setupColumnar() {
 	if err != nil {
 		panic(err)
 	}
-	defer cluster.Close()
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		if err != nil {
+			panic(err)
+		}
+	}(cluster)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
