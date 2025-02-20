@@ -11,11 +11,14 @@ import (
 	"github.com/couchbaselabs/gocbconnstr"
 )
 
+// Cluster is the main entry point for the SDK.
+// It is used to perform operations on the data against a Couchbase Columnar cluster.
 type Cluster struct {
 	client clusterClient
 }
 
-func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*Cluster, error) {
+// NewCluster creates a new Cluster instance.
+func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) (*Cluster, error) {
 	connSpec, err := gocbconnstr.Parse(connStr)
 	if err != nil {
 		return nil, err
@@ -28,8 +31,10 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 		}
 	}
 
-	if opts == nil {
-		opts = NewClusterOptions()
+	clusterOpts := mergeClusterOptions(opts...)
+
+	if clusterOpts == nil {
+		clusterOpts = NewClusterOptions()
 	}
 
 	connectTimeout := 10000 * time.Millisecond
@@ -37,12 +42,12 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 	serverQueryTimeout := 10 * time.Minute
 	useSrv := true
 
-	timeoutOpts := opts.TimeoutOptions
+	timeoutOpts := clusterOpts.TimeoutOptions
 	if timeoutOpts == nil {
 		timeoutOpts = NewTimeoutOptions()
 	}
 
-	securityOpts := opts.SecurityOptions
+	securityOpts := clusterOpts.SecurityOptions
 	if securityOpts == nil {
 		securityOpts = NewSecurityOptions()
 	}
@@ -227,12 +232,12 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 		}
 	}
 
-	unmarshaler := opts.Unmarshaler
+	unmarshaler := clusterOpts.Unmarshaler
 	if unmarshaler == nil {
 		unmarshaler = NewJSONUnmarshaler()
 	}
 
-	if opts.SecurityOptions.DisableServerCertificateVerification != nil && *opts.SecurityOptions.DisableServerCertificateVerification {
+	if clusterOpts.SecurityOptions.DisableServerCertificateVerification != nil && *clusterOpts.SecurityOptions.DisableServerCertificateVerification {
 		logWarnf("server certificate verification is disabled, this is insecure")
 	}
 
@@ -260,6 +265,7 @@ func NewCluster(connStr string, credential Credential, opts *ClusterOptions) (*C
 	return c, nil
 }
 
+// Close shuts down the cluster and releases all resources.
 func (c *Cluster) Close() error {
 	return c.client.Close()
 }

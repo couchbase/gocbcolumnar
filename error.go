@@ -6,14 +6,21 @@ import (
 	"fmt"
 )
 
+// ErrColumnar is the base error for any Columnar error that is not captured by a more specific error.
 var ErrColumnar = errors.New("columnar error")
 
+// ErrInvalidCredential occurs when invalid credentials are provided leading to errors in things like authentication.
 var ErrInvalidCredential = errors.New("invalid credential")
 
+// ErrTimeout occurs when a timeout is reached while waiting for a response.
+// This is returned when a server timeout occurs, or an operation fails to be sent within the dispatch timeout.
 var ErrTimeout = errors.New("timeout error")
 
+// ErrQuery occurs when a server error is encountered while executing a query, excluding errors that caught by
+// ErrInvalidCredential or ErrTimeout.
 var ErrQuery = errors.New("query error")
 
+// ErrInvalidArgument occurs when an invalid argument is provided to a function.
 var ErrInvalidArgument = errors.New("invalid argument")
 
 // ErrClosed occurs when an entity was used after it was closed.
@@ -114,9 +121,9 @@ func (e ColumnarError) Error() string {
 func (e ColumnarError) Unwrap() error {
 	if e.cause == nil {
 		return ErrColumnar
-	} else {
-		return e.cause
 	}
+
+	return e.cause
 }
 
 // QueryError occurs when an error is returned in the errors field of the response body of a response

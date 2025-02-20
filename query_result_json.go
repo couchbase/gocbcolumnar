@@ -53,15 +53,13 @@ func (meta *QueryMetadata) fromData(data jsonAnalyticsResponse) {
 
 func (metrics *QueryMetrics) fromData(data jsonAnalyticsMetrics) {
 	elapsedTime, err := time.ParseDuration(data.ElapsedTime)
-	// nolint: staticcheck
 	if err != nil {
-		// logDebugf("Failed to parse query metrics elapsed time: %s", err)
+		logDebugf("Failed to parse query metrics elapsed time: %s", err)
 	}
 
 	executionTime, err := time.ParseDuration(data.ExecutionTime)
-	// nolint: staticcheck
 	if err != nil {
-		// logDebugf("Failed to parse query metrics execution time: %s", err)
+		logDebugf("Failed to parse query metrics execution time: %s", err)
 	}
 
 	metrics.ElapsedTime = elapsedTime

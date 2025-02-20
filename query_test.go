@@ -15,7 +15,10 @@ import (
 func TestBasicQuery(t *testing.T) {
 	cluster, err := cbcolumnar.NewCluster(TestOpts.OriginalConnStr, cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password), DefaultOptions())
 	require.NoError(t, err)
-	defer cluster.Close()
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		assert.NoError(t, err)
+	}(cluster)
 
 	ExecuteQueryAgainst(t, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(tt *testing.T, queryable Queryable) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -69,7 +72,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Cluster Context Deadline", func(tt *testing.T) {
 		cluster := newCluster(tt, 2*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
@@ -79,7 +85,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Scope Context Deadline", func(tt *testing.T) {
 		cluster := newCluster(tt, 2*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		defer cancel()
@@ -89,7 +98,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Cluster Context Cancel", func(tt *testing.T) {
 		cluster := newCluster(tt, 2*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		cancel()
@@ -99,7 +111,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Scope Context Cancel", func(tt *testing.T) {
 		cluster := newCluster(tt, 2*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 1*time.Second)
 		cancel()
@@ -109,7 +124,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Cluster Timeout", func(tt *testing.T) {
 		cluster := newCluster(tt, 1*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -119,7 +137,10 @@ func TestDispatchTimeout(t *testing.T) {
 
 	t.Run("Scope Timeout", func(tt *testing.T) {
 		cluster := newCluster(tt, 1*time.Second)
-		defer cluster.Close()
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(t, err)
+		}(cluster)
 
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
@@ -134,7 +155,10 @@ func TestOperationTimeout(t *testing.T) {
 		DefaultOptions(),
 	)
 	require.NoError(t, err)
-	defer cluster.Close()
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		assert.NoError(t, err)
+	}(cluster)
 
 	t.Run("Context Deadline", func(tt *testing.T) {
 		ExecuteQueryAgainst(tt, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(ttt *testing.T, queryable Queryable) {
@@ -194,7 +218,10 @@ func TestQueryError(t *testing.T) {
 		DefaultOptions(),
 	)
 	require.NoError(t, err)
-	defer cluster.Close()
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		assert.NoError(t, err)
+	}(cluster)
 
 	ExecuteQueryAgainst(t, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(tt *testing.T, queryable Queryable) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -226,7 +253,10 @@ func TestUnmarshaler(t *testing.T) {
 		DefaultOptions().SetUnmarshaler(unmarshaler),
 	)
 	require.NoError(t, err)
-	defer cluster.Close()
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		assert.NoError(t, err)
+	}(cluster)
 
 	ExecuteQueryAgainst(t, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(tt *testing.T, queryable Queryable) {
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -248,7 +278,7 @@ type ErrorUnmarshaler struct {
 	Err error
 }
 
-func (e *ErrorUnmarshaler) Unmarshal(data []byte, target interface{}) error {
+func (e *ErrorUnmarshaler) Unmarshal(_ []byte, _ interface{}) error {
 	return e.Err
 }
 
