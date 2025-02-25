@@ -44,6 +44,32 @@ func TestBasicQuery(t *testing.T) {
 	})
 }
 
+func TestBasicBufferedQuery(t *testing.T) {
+	cluster, err := cbcolumnar.NewCluster(TestOpts.OriginalConnStr, cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password), DefaultOptions())
+	require.NoError(t, err)
+	defer func(cluster *cbcolumnar.Cluster) {
+		err := cluster.Close()
+		assert.NoError(t, err)
+	}(cluster)
+
+	ExecuteQueryAgainst(t, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(tt *testing.T, queryable Queryable) {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+
+		res, err := queryable.ExecuteQuery(ctx, "FROM RANGE(0, 99) AS i SELECT RAW i")
+		require.NoError(tt, err)
+
+		actualRows, meta, err := cbcolumnar.BufferQueryResult[int](res)
+		require.NoError(tt, err)
+
+		for i := 0; i < 100; i++ {
+			require.Equal(tt, i, actualRows[i])
+		}
+
+		assertMeta(tt, meta, 100)
+	})
+}
+
 func TestDispatchTimeout(t *testing.T) {
 	// We're purposely using an invalid hostname so we need to suppress warnings.
 	globalTestLogger.SuppressWarnings(true)

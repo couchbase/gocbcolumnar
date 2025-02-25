@@ -1,7 +1,6 @@
 package cbcolumnar
 
 import (
-	"encoding/json"
 	"time"
 )
 
@@ -88,7 +87,7 @@ func (qrr *QueryResultRow) ContentAs(valuePtr any) error {
 }
 
 // BufferQueryResult will buffer all rows in the result set into memory and return them as a slice, with any metadata.
-func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, error) {
+func BufferQueryResult[T any](result *QueryResult) ([]T, *QueryMetadata, error) {
 	if result == nil {
 		return nil, nil, invalidArgumentError{
 			ArgumentName: "result",
@@ -96,13 +95,17 @@ func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, e
 		}
 	}
 
-	var buffered []QueryResultRow
+	var buffered []T
 
-	row := result.NextRow()
-	for row != nil {
-		buffered = append(buffered, *row)
+	for row := result.NextRow(); row != nil; row = result.NextRow() {
+		var contentAs T
 
-		row = result.NextRow()
+		err := row.ContentAs(&contentAs)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		buffered = append(buffered, contentAs)
 	}
 
 	meta, err := result.MetaData()
@@ -116,71 +119,6 @@ func BufferQueryResult(result *QueryResult) ([]QueryResultRow, *QueryMetadata, e
 	}
 
 	return buffered, meta, nil
-}
-
-// RowHandler is a function signature that can be used to handle rows as they are streamed from the server.
-type RowHandler func(row *QueryResultRow) error
-
-// IterateQueryResult results will iterate over all rows in the result set and call the handler for each row.
-// This provides a push based approach to streaming the results.
-// Note that the result stream is already bound to context.Context so this function does not take a context.
-func IterateQueryResult(result *QueryResult, handler RowHandler) (*QueryMetadata, error) {
-	if result == nil {
-		return nil, invalidArgumentError{
-			ArgumentName: "result",
-			Reason:       "result cannot be nil",
-		}
-	}
-
-	if err := iterateResults(result, handler); err != nil {
-		return nil, err
-	}
-
-	if err := result.reader.Err(); err != nil {
-		return nil, err
-	}
-
-	meta, err := result.reader.MetaData()
-	if err != nil {
-		return nil, err
-	}
-
-	return meta, nil
-}
-
-func iterateResults(result *QueryResult, handler RowHandler) error {
-	rowCh := make(chan json.RawMessage, 1)
-
-	go func() {
-		for {
-			row := result.reader.NextRow()
-			if row == nil {
-				break
-			}
-
-			rowCh <- row
-		}
-
-		close(rowCh)
-	}()
-
-	for row := range rowCh {
-		if len(row) > 0 {
-			err := handler(&QueryResultRow{
-				rowBytes:    row,
-				unmarshaler: result.unmarshaler,
-			})
-			if err != nil {
-				if e := result.reader.Close(); e != nil {
-					logInfof("Failed to close result: %s", e)
-				}
-
-				return err
-			}
-		}
-	}
-
-	return nil
 }
 
 type analyticsRowReader interface {
