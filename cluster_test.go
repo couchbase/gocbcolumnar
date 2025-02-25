@@ -3,7 +3,7 @@ package cbcolumnar_test
 import (
 	"testing"
 
-	cbcolumnar "github.com/couchbase/gocbcolumnar"
+	cbcolumnar "github.com/couchbaselabs/gocbcolumnar"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	cbcolumnar "github.com/couchbase/gocbcolumnar"
+	cbcolumnar "github.com/couchbaselabs/gocbcolumnar"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

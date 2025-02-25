@@ -1,4 +1,4 @@
-module github.com/couchbase/gocbcolumnar
+module github.com/couchbaselabs/gocbcolumnar
 
 go 1.21.5
 
