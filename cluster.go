@@ -39,7 +39,7 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 
 	connectTimeout := 10000 * time.Millisecond
 	dispatchTimeout := 30000 * time.Millisecond
-	serverQueryTimeout := 10 * time.Minute
+	queryTimeout := 10 * time.Minute
 	useSrv := true
 
 	timeoutOpts := clusterOpts.TimeoutOptions
@@ -60,8 +60,8 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		dispatchTimeout = *timeoutOpts.DispatchTimeout
 	}
 
-	if timeoutOpts.ServerQueryTimeout != nil {
-		serverQueryTimeout = *timeoutOpts.ServerQueryTimeout
+	if timeoutOpts.QueryTimeout != nil {
+		queryTimeout = *timeoutOpts.QueryTimeout
 	}
 
 	fetchOption := func(name string) (string, bool) {
@@ -109,16 +109,16 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		dispatchTimeout = duration
 	}
 
-	if valStr, ok := fetchOption("timeout.server_query_timeout"); ok {
+	if valStr, ok := fetchOption("timeout.uery_timeout"); ok {
 		duration, err := time.ParseDuration(valStr)
 		if err != nil {
 			return nil, invalidArgumentError{
-				ArgumentName: "timeout.server_query_timeout",
+				ArgumentName: "timeout.query_timeout",
 				Reason:       err.Error(),
 			}
 		}
 
-		serverQueryTimeout = duration
+		queryTimeout = duration
 	}
 
 	if valStr, ok := fetchOption("security.trust_only_pem_file"); ok {
@@ -192,9 +192,9 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		}
 	}
 
-	if serverQueryTimeout == 0 {
+	if queryTimeout == 0 {
 		return nil, invalidArgumentError{
-			ArgumentName: "ServerQueryTimeout",
+			ArgumentName: "QueryTimeout",
 			Reason:       "must be greater than 0",
 		}
 	}
@@ -246,7 +246,7 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		Credential:                           &credential,
 		ConnectTimeout:                       connectTimeout,
 		DispatchTimeout:                      dispatchTimeout,
-		ServerQueryTimeout:                   serverQueryTimeout,
+		ServerQueryTimeout:                   queryTimeout,
 		TrustOnly:                            securityOpts.TrustOnly,
 		DisableServerCertificateVerification: securityOpts.DisableServerCertificateVerification,
 		CipherSuites:                         cipherSuites,

@@ -196,11 +196,20 @@ func TestOperationTimeout(t *testing.T) {
 	})
 
 	t.Run("Timeout", func(tt *testing.T) {
-		ExecuteQueryAgainst(tt, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(ttt *testing.T, queryable Queryable) {
-			ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-			defer cancel()
+		cluster, err := cbcolumnar.NewCluster(TestOpts.OriginalConnStr,
+			cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password),
+			DefaultOptions().SetTimeoutOptions(cbcolumnar.NewTimeoutOptions().SetQueryTimeout(1*time.Second)),
+		)
+		require.NoError(tt, err)
+		defer func(cluster *cbcolumnar.Cluster) {
+			err := cluster.Close()
+			assert.NoError(tt, err)
+		}(cluster)
 
-			_, err := queryable.ExecuteQuery(ctx, "SELECT sleep('foo', 5000);", cbcolumnar.NewQueryOptions().SetServerQueryTimeout(1*time.Second))
+		ExecuteQueryAgainst(tt, []Queryable{cluster, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope)}, func(ttt *testing.T, queryable Queryable) {
+			ctx := context.Background()
+
+			_, err := queryable.ExecuteQuery(ctx, "SELECT sleep('foo', 5000);")
 			require.ErrorIs(ttt, err, cbcolumnar.ErrTimeout)
 
 			var columnarErr *cbcolumnar.ColumnarError

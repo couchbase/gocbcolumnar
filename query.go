@@ -5,6 +5,8 @@ import (
 )
 
 // ExecuteQuery executes the query statement on the server.
+// When ExecuteQuery is called with no context.Context, or a context.Context with no Deadline, then
+// the Cluster level QueryTimeout will be applied.
 func (c *Cluster) ExecuteQuery(ctx context.Context, statement string, opts ...*QueryOptions) (*QueryResult, error) {
 	if ctx == nil {
 		ctx = context.Background()
@@ -15,13 +17,25 @@ func (c *Cluster) ExecuteQuery(ctx context.Context, statement string, opts ...*Q
 	return c.client.QueryClient().Query(ctx, statement, queryOpts)
 }
 
+// ExecuteQuery executes the query statement on the server, tying the query context to this Scope.
+// When ExecuteQuery is called with no context.Context, or a context.Context with no Deadline, then
+// the Cluster level QueryTimeout will be applied.
+func (s *Scope) ExecuteQuery(ctx context.Context, statement string, opts ...*QueryOptions) (*QueryResult, error) {
+	if ctx == nil {
+		ctx = context.Background()
+	}
+
+	queryOpts := mergeQueryOptions(opts...)
+
+	return s.client.QueryClient().Query(ctx, statement, queryOpts)
+}
+
 func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 	queryOpts := &QueryOptions{
 		Priority:             nil,
 		PositionalParameters: nil,
 		NamedParameters:      nil,
 		ReadOnly:             nil,
-		ServerQueryTimeout:   nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		Unmarshaler:          nil,
@@ -58,10 +72,6 @@ func mergeQueryOptions(opts ...*QueryOptions) *QueryOptions {
 
 		if opt.Unmarshaler != nil {
 			queryOpts.Unmarshaler = opt.Unmarshaler
-		}
-
-		if opt.ServerQueryTimeout != nil {
-			queryOpts.ServerQueryTimeout = opt.ServerQueryTimeout
 		}
 	}
 

@@ -92,7 +92,7 @@ func (e ColumnarError) withCause(cause error) *ColumnarError {
 
 // Error returns the string representation of a Columnar error.
 func (e ColumnarError) Error() string {
-	errBytes, _ := json.Marshal(struct {
+	errBytes, serErr := json.Marshal(struct {
 		Statement        string              `json:"statement,omitempty"`
 		Errors           []columnarErrorDesc `json:"errors,omitempty"`
 		Message          string              `json:"message,omitempty"`
@@ -105,9 +105,9 @@ func (e ColumnarError) Error() string {
 		Endpoint:         e.endpoint,
 		HTTPResponseCode: e.httpResponseCode,
 	})
-	// if serErr != nil {
-	// 	logErrorf("failed to serialize error to json: %s", serErr.Error())
-	// }
+	if serErr != nil {
+		logErrorf("failed to serialize error to json: %s", serErr.Error())
+	}
 
 	cause := e.cause
 	if cause == nil {
