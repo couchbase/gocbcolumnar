@@ -1,7 +1,5 @@
 package cbcolumnar
 
-import "time"
-
 // QueryScanConsistency indicates the level of data consistency desired for an analytics query.
 type QueryScanConsistency uint
 
@@ -29,9 +27,6 @@ type QueryOptions struct {
 	// ScanConsistency specifies the level of data consistency required for this query.
 	ScanConsistency *QueryScanConsistency
 
-	// ServerQueryTimeout specifies the maximum time the server will spend executing the query.
-	ServerQueryTimeout *time.Duration
-
 	// Raw provides a way to provide extra parameters in the request body for the query.
 	Raw map[string]interface{}
 
@@ -46,7 +41,6 @@ func NewQueryOptions() *QueryOptions {
 		PositionalParameters: nil,
 		NamedParameters:      nil,
 		ReadOnly:             nil,
-		ServerQueryTimeout:   nil,
 		ScanConsistency:      nil,
 		Raw:                  nil,
 		Unmarshaler:          nil,
@@ -84,13 +78,6 @@ func (opts *QueryOptions) SetReadOnly(readOnly bool) *QueryOptions {
 // SetScanConsistency sets the ScanConsistency field in QueryOptions.
 func (opts *QueryOptions) SetScanConsistency(scanConsistency QueryScanConsistency) *QueryOptions {
 	opts.ScanConsistency = &scanConsistency
-
-	return opts
-}
-
-// SetServerQueryTimeout sets the ServerQueryTimeout field in QueryOptions.
-func (opts *QueryOptions) SetServerQueryTimeout(timeout time.Duration) *QueryOptions {
-	opts.ServerQueryTimeout = &timeout
 
 	return opts
 }

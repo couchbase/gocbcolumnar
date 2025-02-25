@@ -100,17 +100,18 @@ type TimeoutOptions struct {
 	// Default = 30 seconds
 	DispatchTimeout *time.Duration
 
-	// ServerQueryTimeout specifies how long the server will spend executing a query before timing it out.
+	// QueryTimeout specifies the default amount of time to spend executing a query before timing it out.
+	// This value is only used if the context.Context at the operation level does not specify a deadline.
 	// Default = 10 minutes
-	ServerQueryTimeout *time.Duration
+	QueryTimeout *time.Duration
 }
 
 // NewTimeoutOptions creates a new instance of TimeoutOptions.
 func NewTimeoutOptions() *TimeoutOptions {
 	return &TimeoutOptions{
-		ConnectTimeout:     nil,
-		DispatchTimeout:    nil,
-		ServerQueryTimeout: nil,
+		ConnectTimeout:  nil,
+		DispatchTimeout: nil,
+		QueryTimeout:    nil,
 	}
 }
 
@@ -128,9 +129,9 @@ func (opts *TimeoutOptions) SetDispatchTimeout(timeout time.Duration) *TimeoutOp
 	return opts
 }
 
-// SetServerQueryTimeout sets the ServerQueryTimeout field in TimeoutOptions.
-func (opts *TimeoutOptions) SetServerQueryTimeout(timeout time.Duration) *TimeoutOptions {
-	opts.ServerQueryTimeout = &timeout
+// SetQueryTimeout sets the QueryTimeout field in TimeoutOptions.
+func (opts *TimeoutOptions) SetQueryTimeout(timeout time.Duration) *TimeoutOptions {
+	opts.QueryTimeout = &timeout
 
 	return opts
 }
@@ -151,9 +152,9 @@ type ClusterOptions struct {
 func NewClusterOptions() *ClusterOptions {
 	return &ClusterOptions{
 		TimeoutOptions: &TimeoutOptions{
-			ConnectTimeout:     nil,
-			DispatchTimeout:    nil,
-			ServerQueryTimeout: nil,
+			ConnectTimeout:  nil,
+			DispatchTimeout: nil,
+			QueryTimeout:    nil,
 		},
 		SecurityOptions: &SecurityOptions{
 			TrustOnly:                            TrustOnlyCapella{},
@@ -200,9 +201,9 @@ func mergeClusterOptions(opts ...*ClusterOptions) *ClusterOptions {
 		if opt.TimeoutOptions != nil {
 			if clusterOpts.TimeoutOptions == nil {
 				clusterOpts.TimeoutOptions = &TimeoutOptions{
-					ConnectTimeout:     nil,
-					DispatchTimeout:    nil,
-					ServerQueryTimeout: nil,
+					ConnectTimeout:  nil,
+					DispatchTimeout: nil,
+					QueryTimeout:    nil,
 				}
 			}
 
@@ -214,8 +215,8 @@ func mergeClusterOptions(opts ...*ClusterOptions) *ClusterOptions {
 				clusterOpts.TimeoutOptions.DispatchTimeout = opt.TimeoutOptions.DispatchTimeout
 			}
 
-			if opt.TimeoutOptions.ServerQueryTimeout != nil {
-				clusterOpts.TimeoutOptions.ServerQueryTimeout = opt.TimeoutOptions.ServerQueryTimeout
+			if opt.TimeoutOptions.QueryTimeout != nil {
+				clusterOpts.TimeoutOptions.QueryTimeout = opt.TimeoutOptions.QueryTimeout
 			}
 		}
 

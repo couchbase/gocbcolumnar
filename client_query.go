@@ -22,18 +22,19 @@ type gocbcoreQueryClientNamespace struct {
 	Scope    string
 }
 type gocbcoreQueryClient struct {
-	agent                     *gocbcore.ColumnarAgent
-	defaultServerQueryTimeout time.Duration
-	defaultUnmarshaler        Unmarshaler
-	namespace                 *gocbcoreQueryClientNamespace
+	agent               *gocbcore.ColumnarAgent
+	defaultQueryTimeout time.Duration
+	defaultUnmarshaler  Unmarshaler
+	namespace           *gocbcoreQueryClientNamespace
 }
 
-func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultServerQueryTimeout time.Duration, defaultUnmarshaler Unmarshaler, namespace *gocbcoreQueryClientNamespace) *gocbcoreQueryClient {
+func newGocbcoreQueryClient(agent *gocbcore.ColumnarAgent, defaultQueryTimeout time.Duration,
+	defaultUnmarshaler Unmarshaler, namespace *gocbcoreQueryClientNamespace) *gocbcoreQueryClient {
 	return &gocbcoreQueryClient{
-		agent:                     agent,
-		defaultServerQueryTimeout: defaultServerQueryTimeout,
-		defaultUnmarshaler:        defaultUnmarshaler,
-		namespace:                 namespace,
+		agent:               agent,
+		defaultQueryTimeout: defaultQueryTimeout,
+		defaultUnmarshaler:  defaultUnmarshaler,
+		namespace:           namespace,
 	}
 }
 
@@ -112,15 +113,11 @@ func (c *gocbcoreQueryClient) translateQueryOptions(ctx context.Context, stateme
 		execOpts["readonly"] = *opts.ReadOnly
 	}
 
-	if opts.ServerQueryTimeout == nil {
-		deadline, ok := ctx.Deadline()
-		if ok {
-			execOpts["timeout"] = (time.Until(deadline) + 5*time.Second).String()
-		} else {
-			execOpts["timeout"] = c.defaultServerQueryTimeout.String()
-		}
+	deadline, ok := ctx.Deadline()
+	if ok {
+		execOpts["timeout"] = (time.Until(deadline) + 5*time.Second).String()
 	} else {
-		execOpts["timeout"] = opts.ServerQueryTimeout.String()
+		execOpts["timeout"] = c.defaultQueryTimeout.String()
 	}
 
 	execOpts["statement"] = statement
