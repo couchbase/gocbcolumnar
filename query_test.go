@@ -78,7 +78,7 @@ func TestDispatchTimeout(t *testing.T) {
 	newCluster := func(tt *testing.T, dispatchTimeout time.Duration) *cbcolumnar.Cluster {
 		cluster, err := cbcolumnar.NewCluster("couchbases://somenonsense?srv=false",
 			cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password),
-			DefaultOptions().SetTimeoutOptions(cbcolumnar.NewTimeoutOptions().SetDispatchTimeout(dispatchTimeout)),
+			DefaultOptions().SetTimeoutOptions(cbcolumnar.NewTimeoutOptions().SetQueryTimeout(dispatchTimeout)),
 		)
 		require.NoError(tt, err)
 
@@ -155,10 +155,7 @@ func TestDispatchTimeout(t *testing.T) {
 			assert.NoError(t, err)
 		}(cluster)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		runTest(ctx, tt, cluster, cbcolumnar.ErrTimeout)
+		runTest(context.Background(), tt, cluster, cbcolumnar.ErrTimeout)
 	})
 
 	t.Run("Scope Timeout", func(tt *testing.T) {
@@ -168,10 +165,7 @@ func TestDispatchTimeout(t *testing.T) {
 			assert.NoError(t, err)
 		}(cluster)
 
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-
-		runTest(ctx, tt, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope), cbcolumnar.ErrTimeout)
+		runTest(context.Background(), tt, cluster.Database(TestOpts.Database).Scope(TestOpts.Scope), cbcolumnar.ErrTimeout)
 	})
 }
 

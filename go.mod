@@ -3,7 +3,7 @@ module github.com/couchbaselabs/gocbcolumnar
 go 1.21.5
 
 require (
-	github.com/couchbase/gocbcore/v10 v10.5.4-0.20250224120954-e3fa0db14b53
+	github.com/couchbase/gocbcore/v10 v10.5.4-0.20250226113601-28ff34ecbc84
 	github.com/couchbaselabs/gocbconnstr v1.0.5
 	github.com/google/uuid v1.6.0
 	github.com/stretchr/testify v1.10.0

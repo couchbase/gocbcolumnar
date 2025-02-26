@@ -95,11 +95,6 @@ type TimeoutOptions struct {
 	// Default = 10 seconds
 	ConnectTimeout *time.Duration
 
-	// DispatchTimeout specifies how long to wait for the SDK to retry a request due to network
-	// connectivity issues or unexpected cluster topology changes.
-	// Default = 30 seconds
-	DispatchTimeout *time.Duration
-
 	// QueryTimeout specifies the default amount of time to spend executing a query before timing it out.
 	// This value is only used if the context.Context at the operation level does not specify a deadline.
 	// Default = 10 minutes
@@ -109,22 +104,14 @@ type TimeoutOptions struct {
 // NewTimeoutOptions creates a new instance of TimeoutOptions.
 func NewTimeoutOptions() *TimeoutOptions {
 	return &TimeoutOptions{
-		ConnectTimeout:  nil,
-		DispatchTimeout: nil,
-		QueryTimeout:    nil,
+		ConnectTimeout: nil,
+		QueryTimeout:   nil,
 	}
 }
 
 // SetConnectTimeout sets the ConnectTimeout field in TimeoutOptions.
 func (opts *TimeoutOptions) SetConnectTimeout(timeout time.Duration) *TimeoutOptions {
 	opts.ConnectTimeout = &timeout
-
-	return opts
-}
-
-// SetDispatchTimeout sets the DispatchTimeout field in TimeoutOptions.
-func (opts *TimeoutOptions) SetDispatchTimeout(timeout time.Duration) *TimeoutOptions {
-	opts.DispatchTimeout = &timeout
 
 	return opts
 }
@@ -152,9 +139,8 @@ type ClusterOptions struct {
 func NewClusterOptions() *ClusterOptions {
 	return &ClusterOptions{
 		TimeoutOptions: &TimeoutOptions{
-			ConnectTimeout:  nil,
-			DispatchTimeout: nil,
-			QueryTimeout:    nil,
+			ConnectTimeout: nil,
+			QueryTimeout:   nil,
 		},
 		SecurityOptions: &SecurityOptions{
 			TrustOnly:                            TrustOnlyCapella{},
@@ -201,18 +187,13 @@ func mergeClusterOptions(opts ...*ClusterOptions) *ClusterOptions {
 		if opt.TimeoutOptions != nil {
 			if clusterOpts.TimeoutOptions == nil {
 				clusterOpts.TimeoutOptions = &TimeoutOptions{
-					ConnectTimeout:  nil,
-					DispatchTimeout: nil,
-					QueryTimeout:    nil,
+					ConnectTimeout: nil,
+					QueryTimeout:   nil,
 				}
 			}
 
 			if opt.TimeoutOptions.ConnectTimeout != nil {
 				clusterOpts.TimeoutOptions.ConnectTimeout = opt.TimeoutOptions.ConnectTimeout
-			}
-
-			if opt.TimeoutOptions.DispatchTimeout != nil {
-				clusterOpts.TimeoutOptions.DispatchTimeout = opt.TimeoutOptions.DispatchTimeout
 			}
 
 			if opt.TimeoutOptions.QueryTimeout != nil {
