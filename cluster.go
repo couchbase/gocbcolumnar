@@ -38,7 +38,6 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 	}
 
 	connectTimeout := 10000 * time.Millisecond
-	dispatchTimeout := 30000 * time.Millisecond
 	queryTimeout := 10 * time.Minute
 	useSrv := true
 
@@ -54,10 +53,6 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 
 	if timeoutOpts.ConnectTimeout != nil {
 		connectTimeout = *timeoutOpts.ConnectTimeout
-	}
-
-	if timeoutOpts.DispatchTimeout != nil {
-		dispatchTimeout = *timeoutOpts.DispatchTimeout
 	}
 
 	if timeoutOpts.QueryTimeout != nil {
@@ -97,19 +92,7 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		connectTimeout = duration
 	}
 
-	if valStr, ok := fetchOption("timeout.dispatch_timeout"); ok {
-		duration, err := time.ParseDuration(valStr)
-		if err != nil {
-			return nil, invalidArgumentError{
-				ArgumentName: "timeout.dispatch_timeout",
-				Reason:       err.Error(),
-			}
-		}
-
-		dispatchTimeout = duration
-	}
-
-	if valStr, ok := fetchOption("timeout.uery_timeout"); ok {
+	if valStr, ok := fetchOption("timeout.query_timeout"); ok {
 		duration, err := time.ParseDuration(valStr)
 		if err != nil {
 			return nil, invalidArgumentError{
@@ -185,13 +168,6 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		}
 	}
 
-	if dispatchTimeout == 0 {
-		return nil, invalidArgumentError{
-			ArgumentName: "DispatchTimeout",
-			Reason:       "must be greater than 0",
-		}
-	}
-
 	if queryTimeout == 0 {
 		return nil, invalidArgumentError{
 			ArgumentName: "QueryTimeout",
@@ -245,7 +221,6 @@ func NewCluster(connStr string, credential Credential, opts ...*ClusterOptions) 
 		Spec:                                 connSpec,
 		Credential:                           &credential,
 		ConnectTimeout:                       connectTimeout,
-		DispatchTimeout:                      dispatchTimeout,
 		ServerQueryTimeout:                   queryTimeout,
 		TrustOnly:                            securityOpts.TrustOnly,
 		DisableServerCertificateVerification: securityOpts.DisableServerCertificateVerification,

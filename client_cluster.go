@@ -27,7 +27,6 @@ type clusterClientOptions struct {
 	Spec                                 gocbconnstr.ConnSpec
 	Credential                           *Credential
 	ConnectTimeout                       time.Duration
-	DispatchTimeout                      time.Duration
 	ServerQueryTimeout                   time.Duration
 	TrustOnly                            TrustOnly
 	DisableServerCertificateVerification *bool
@@ -131,9 +130,8 @@ func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient
 	}
 
 	coreOpts := &gocbcore.ColumnarAgentConfig{
-		UserAgent:       "gocbcolumnar",
-		ConnectTimeout:  opts.ConnectTimeout,
-		DispatchTimeout: opts.DispatchTimeout,
+		UserAgent:      "gocbcolumnar",
+		ConnectTimeout: opts.ConnectTimeout,
 		SeedConfig: gocbcore.ColumnarSeedConfig{
 			MemdAddrs: addresses,
 			SRVRecord: srvRecord,
