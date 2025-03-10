@@ -130,7 +130,7 @@ func newGocbcoreClusterClient(opts clusterClientOptions) (*gocbcoreClusterClient
 	}
 
 	coreOpts := &gocbcore.ColumnarAgentConfig{
-		UserAgent:      "gocbcolumnar",
+		UserAgent:      Identifier(),
 		ConnectTimeout: opts.ConnectTimeout,
 		SeedConfig: gocbcore.ColumnarSeedConfig{
 			MemdAddrs: addresses,
