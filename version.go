@@ -1,7 +1,7 @@
 package cbcolumnar
 
 const (
-	versionStr = "v0.0.1"
+	versionStr = "v1.0.0"
 )
 
 // Version returns a string representation of the current SDK version.
