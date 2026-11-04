@@ -15,6 +15,7 @@ import (
 func TestBasicQuery(t *testing.T) {
 	cluster, err := cbcolumnar.NewCluster(TestOpts.OriginalConnStr, cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password), DefaultOptions())
 	require.NoError(t, err)
+
 	defer func(cluster *cbcolumnar.Cluster) {
 		err := cluster.Close()
 		assert.NoError(t, err)
@@ -46,6 +47,7 @@ func TestBasicQuery(t *testing.T) {
 
 func TestBasicBufferedQuery(t *testing.T) {
 	cluster, err := cbcolumnar.NewCluster(TestOpts.OriginalConnStr, cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password), DefaultOptions())
+
 	require.NoError(t, err)
 	defer func(cluster *cbcolumnar.Cluster) {
 		err := cluster.Close()
@@ -174,6 +176,7 @@ func TestOperationTimeout(t *testing.T) {
 		cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password),
 		DefaultOptions(),
 	)
+
 	require.NoError(t, err)
 	defer func(cluster *cbcolumnar.Cluster) {
 		err := cluster.Close()
@@ -220,6 +223,7 @@ func TestOperationTimeout(t *testing.T) {
 			cbcolumnar.NewCredential(TestOpts.Username, TestOpts.Password),
 			DefaultOptions().SetTimeoutOptions(cbcolumnar.NewTimeoutOptions().SetQueryTimeout(1*time.Second)),
 		)
+
 		require.NoError(tt, err)
 		defer func(cluster *cbcolumnar.Cluster) {
 			err := cluster.Close()
@@ -247,6 +251,7 @@ func TestQueryError(t *testing.T) {
 		DefaultOptions(),
 	)
 	require.NoError(t, err)
+
 	defer func(cluster *cbcolumnar.Cluster) {
 		err := cluster.Close()
 		assert.NoError(t, err)
@@ -282,6 +287,7 @@ func TestUnmarshaler(t *testing.T) {
 		DefaultOptions().SetUnmarshaler(unmarshaler),
 	)
 	require.NoError(t, err)
+
 	defer func(cluster *cbcolumnar.Cluster) {
 		err := cluster.Close()
 		assert.NoError(t, err)
@@ -298,6 +304,7 @@ func TestUnmarshaler(t *testing.T) {
 		require.NotNil(tt, row)
 
 		var val interface{}
+
 		err = row.ContentAs(&val)
 		require.ErrorIs(tt, err, unmarshaler.Err)
 	})
@@ -339,6 +346,7 @@ func CollectRows[T any](t *testing.T, res *cbcolumnar.QueryResult) []T {
 
 	for row := res.NextRow(); row != nil; row = res.NextRow() {
 		var actualRow T
+
 		err := row.ContentAs(&actualRow)
 		require.NoError(t, err)
 

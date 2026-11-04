@@ -96,10 +96,10 @@ func (c *gocbcoreQueryClient) translateQueryOptions(ctx context.Context, stateme
 	}
 
 	if opts.ScanConsistency != nil {
-		switch {
-		case *opts.ScanConsistency == QueryScanConsistencyNotBounded:
+		switch *opts.ScanConsistency {
+		case QueryScanConsistencyNotBounded:
 			execOpts["scan_consistency"] = "not_bounded"
-		case *opts.ScanConsistency == QueryScanConsistencyRequestPlus:
+		case QueryScanConsistencyRequestPlus:
 			execOpts["scan_consistency"] = "request_plus"
 		default:
 			return nil, invalidArgumentError{
