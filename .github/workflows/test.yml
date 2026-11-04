@@ -13,12 +13,12 @@ jobs:
   test:
     name: Integration Test
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Install cbdinocluster
         run: |
           mkdir -p "$HOME/bin"
-          wget -nv -O $HOME/bin/cbdinocluster https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.54/cbdinocluster-linux-amd64
+          wget -nv -O $HOME/bin/cbdinocluster https://github.com/couchbaselabs/cbdinocluster/releases/download/v0.0.130/cbdinocluster-linux-amd64
           chmod +x $HOME/bin/cbdinocluster
           echo "$HOME/bin" >> $GITHUB_PATH
       - name: Install s3mock
@@ -26,7 +26,7 @@ jobs:
           docker pull adobe/s3mock
       - name: Initialize cbdinocluster
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cbdinocluster -v init --auto
       - name: Start couchbase cluster
@@ -45,7 +45,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.26'
       - name: Initialize deps
         run: go get
       - name: Run tests
