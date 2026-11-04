@@ -13,7 +13,7 @@ jobs:
   test:
     name: Integration Test
 
-    runs-on: ubuntu-20.04
+    runs-on: ubuntu-latest
     steps:
       - name: Install cbdinocluster
         run: |
@@ -26,7 +26,7 @@ jobs:
           docker pull adobe/s3mock
       - name: Initialize cbdinocluster
         env:
-          GITHUB_TOKEN: ${{ secrets.GHCR_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cbdinocluster -v init --auto
       - name: Start couchbase cluster
